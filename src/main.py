@@ -40,6 +40,9 @@ def playVideoFrameFile():
             print("Can't recieve frame (stream end?). Exiting...")
             break
 
+        # Resize the frame
+        frame = cv.resize(frame, (1280, 720))
+
         # adds a gray filter
         # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 

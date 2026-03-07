@@ -277,3 +277,56 @@ Concepts we will learn:
 • Image masking
 • Contours
 • Extracting object center points
+
+# Lesson - Frame Downscaling
+
+High-resolution video significantly increases computation
+
+Example:
+4K Resolution
+3840 x 2160 = 8,294,400 pixels per frame
+If processing 23 frames per second:
+
+≈ 191 million pixels processed every second.
+
+To improve performance, many computer vision systems downscale frames before proccessing.
+
+Example:
+
+```python
+frame = cv.resize(frame, (1280, 720))
+```
+
+# Lesson - HSV Color Space
+
+HSV for detection
+HSV separates color from brightness
+
+H = Hue
+S = Saturation
+V = Value (brightness)
+
+OpenCV images are normally loaded in BGR format, which mixes color and brightness.
+
+This makes color detection unreliable because lighting changes the BGR values significantly.
+
+HSV separates the actual color (Hue) from brightness (Value)
+
+Hue represents the color itself
+
+Isolate for the orange basketball with this code
+
+```python
+hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+mask = cv.inRange(hsv, lower_orange, upper_orange)
+```
+
+Produces a binary mask
+white = possible basketball pixels
+black = everything else
+
+# Lesson - False Positive in Color Detection
+
+Color masking does not detect "a basketball."
+
+It only detects pixels within a chosen color range.
