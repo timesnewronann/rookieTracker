@@ -330,3 +330,61 @@ black = everything else
 Color masking does not detect "a basketball."
 
 It only detects pixels within a chosen color range.
+
+This means other orange objects may also be detected.
+
+Examples from current video:
+
+- orange shorts
+- shot clock glow
+- reflections or lighting
+- another basketball
+- other orange objects in the scene
+
+Incorrect Detections == false positives
+
+Color is not enough for reliable basketball detection
+
+We will add more filters to improve detection later
+
+- position filter (region of interest)
+- size filter
+- shape filter
+- motion filter
+- tracking from previous frame
+
+A simple detector often gives noisy results first
+It will improve by layering constraints
+
+# Lesson — What a Mask Looks Like
+
+A color mask is a binary image.
+
+It is not a normal color image.
+
+Pixel meaning:
+
+- white (255) = pixel matches the target color range
+- black (0) = pixel does not match
+
+For basketball detection:
+
+- orange parts of the frame become white
+- everything else becomes black
+
+This makes the image much easier to analyze because the system only needs to focus on matching regions instead of all original pixel values.
+
+# Lesson - Common Loop Bugs in OpenCV
+
+Two common bugs appeared while building the mask display version.
+
+## Bug 1 - Releasing the capture inside the loop
+
+If `cap.release()` is called inside the frame-processing loop, the video stream closes too early.
+
+Then the next call to:
+
+```python
+ret, frame = cap.read()
+```
+

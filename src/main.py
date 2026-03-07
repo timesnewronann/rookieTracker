@@ -43,14 +43,40 @@ def playVideoFrameFile():
         # Resize the frame
         frame = cv.resize(frame, (1280, 720))
 
+        # Convert from BGR to HSV
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+
+        # Define lower orange range
+        lower_orange = np.array([10, 100, 100])
+
+        # Define Upper orange range
+        upper_orange = np.array([25, 255, 255])
+
+        # Create an orange mask from HSV image
+        mask = cv.inRange(hsv, lower_orange, upper_orange)
+
+        # Bitwise-AND mask and original image
+        res = cv.bitwise_and(frame, frame, mask=mask)
+
         # adds a gray filter
         # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
         # 6. Show the frame
         cv.imshow('frame', frame)
+
+        # show the mask
+        cv.imshow('mask', mask)
+
+        cv.imshow('res', res)
+
+        key = cv.waitKey(5) & 0xFF
         # 7. If user presses q stop
-        if cv.waitKey(1) == ord('q'):
+        if key == ord('q'):
             break
+
+        # Show mask
+        elif cv.waitKey(1) == ord('m'):
+            pass
 
     # 8. Release the video object
     cap.release()
