@@ -388,3 +388,55 @@ Then the next call to:
 ret, frame = cap.read()
 ```
 
+Lesson - Contours
+
+After creating a color mask, we still do not know which object is the basketball.
+
+The mask may contain multiple white regions representing different orange objects.
+
+Examples:
+
+- basketball
+- shorts
+- shot clock
+- reflections
+
+To separate these objects we use **contours**.
+
+Contours represent the outlines of connected white regions in a binary mask.
+
+Example:
+
+```python
+contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+```
+
+# Lesson Filtering COntours by Size
+
+After detecting contours from a mask, many of them may represent noise.
+
+Examples:
+
+- shot clock pixels
+- reflections
+- compression artificats
+
+A simple way to remove these is by filtering contours based on area.
+
+OpenCV provides:
+
+```python
+cv.contourArea(contour)
+```
+
+
+# Lesson Threshold Tradeoffs
+
+Contour area filtering helps remove noise, but the threshold must be chosen carefully.
+
+Examples:
+
+```python
+if area < 300:
+    continue
+```

@@ -58,8 +58,20 @@ def playVideoFrameFile():
         # Bitwise-AND mask and original image
         res = cv.bitwise_and(frame, frame, mask=mask)
 
-        # adds a gray filter
-        # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        # Find contours from the mask
+        contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+
+        # loop through the contours
+        for contour in contours:
+            # get the area
+            area = cv.contourArea(contour)
+
+            # Skip tiny areas
+            if area < 300:
+                continue
+
+        # draw the contours
+        cv.drawContours(frame, [contour], -1, (0, 255, 0), 2)
 
         # 6. Show the frame
         cv.imshow('frame', frame)
