@@ -278,7 +278,7 @@ Concepts we will learn:
 • Contours
 • Extracting object center points
 
-# Lesson - Frame Downscaling
+# Lesson 7 - Frame Downscaling
 
 High-resolution video significantly increases computation
 
@@ -297,7 +297,7 @@ Example:
 frame = cv.resize(frame, (1280, 720))
 ```
 
-# Lesson - HSV Color Space
+# Lesson 8 - HSV Color Space
 
 HSV for detection
 HSV separates color from brightness
@@ -325,7 +325,7 @@ Produces a binary mask
 white = possible basketball pixels
 black = everything else
 
-# Lesson - False Positive in Color Detection
+# Lesson 9 - False Positive in Color Detection
 
 Color masking does not detect "a basketball."
 
@@ -356,7 +356,7 @@ We will add more filters to improve detection later
 A simple detector often gives noisy results first
 It will improve by layering constraints
 
-# Lesson — What a Mask Looks Like
+# Lesson 10 — What a Mask Looks Like
 
 A color mask is a binary image.
 
@@ -374,7 +374,7 @@ For basketball detection:
 
 This makes the image much easier to analyze because the system only needs to focus on matching regions instead of all original pixel values.
 
-# Lesson - Common Loop Bugs in OpenCV
+# Lesson 11 - Common Loop Bugs in OpenCV
 
 Two common bugs appeared while building the mask display version.
 
@@ -388,7 +388,7 @@ Then the next call to:
 ret, frame = cap.read()
 ```
 
-Lesson - Contours
+# Lesson 12 - Contours
 
 After creating a color mask, we still do not know which object is the basketball.
 
@@ -411,7 +411,7 @@ Example:
 contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 ```
 
-# Lesson Filtering Contours by Size
+# Lesson 13 - Filtering Contours by Size
 
 After detecting contours from a mask, many of them may represent noise.
 
@@ -429,7 +429,7 @@ OpenCV provides:
 cv.contourArea(contour)
 ```
 
-# Lesson Threshold Tradeoffs
+# Lesson 14 - Threshold Tradeoffs
 
 Contour area filtering helps remove noise, but the threshold must be chosen carefully.
 
@@ -440,7 +440,7 @@ if area < 300:
     continue
 ```
 
-# Lesson - Area Filtering Is Not Enough
+# Lesson 15 - Area Filtering Is Not Enough
 
 Filtering contours by area removes small noise
 This doesn't gurantee that the remaining object is the basketball.
@@ -460,7 +460,7 @@ To improve detection, we need additional filters such as:
 - position
 - motion
 
-# Lesson - Bounding Rectangles
+# Lesson 16 - Bounding Rectangles
 
 When we detect a contour, draw a bounding rectangle around it
 
@@ -470,7 +470,7 @@ OpenCV function:
 x, y, w, h = cv.boundingRect(contour)
 ```
 
-# Lesson - Debug filters one at a Time
+# Lesson 17 - Debug filters one at a Time
 
 Filter may be rejecting the object before drawing happens.
 
@@ -488,7 +488,7 @@ Makes it easier to identify whether the issue comes from:
 - shape threshold
 - drawing location
 
-# Lesson - Debugging Fast Video is difficult
+# Lesson 18 - Debugging Fast Video is difficult
 
 When drawings do not appear clearly on video output, the problem may be visual inspection rather than the drawing code.
 
@@ -506,7 +506,7 @@ A strong debugging technique is to:
 - increase line thickness
 - add text labels to detected objects
 
-# Lesson - A Bad Contour == A Bad Mask
+# Lesson 19 - A Bad Contour == A Bad Mask
 
 If contour measurements mostly describe poles, strips, or small fragments, the issue is often earlier in the pipeline.
 
@@ -517,3 +517,68 @@ Bad contour output usually means:
 - the HSV range is not isolating the object well
 
 This means contour filtering cannot fully solve the problem unless the mask is improved first.
+
+# Lesson 20 — Debugging Is Easier with Display Toggles
+
+When a computer vision pipeline has multiple outputs, it can be hard to understand what is happening if all views are shown at once.
+
+A useful debugging pattern is to add display toggles.
+
+Example modes:
+
+- annotated frame
+- binary mask
+- masked color result
+
+This allows the developer to inspect one stage of the pipeline at a time.
+
+This is especially helpful when trying to answer questions like:
+
+- Is the mask correct?
+- Are contours being found?
+- Are bounding boxes actually being drawn?
+- Is the issue in detection or just in visualization?
+
+# Lesson 21 — Region of Interest (ROI)
+
+When a detector searches the entire frame, it often finds many irrelevant objects.
+
+A Region of Interest (ROI) limits processing to only the part of the image where the target is likely to appear.
+
+Example:
+
+- ignore the upper wall
+- ignore the shot clock
+- ignore distant background objects
+
+This improves detection by reducing false positives before contour filtering even begins.
+
+ROI is one of the most practical ways to improve a classical computer vision pipeline.
+
+# Lesson 22 — Static ROI vs Dynamic ROI
+
+A Region of Interest (ROI) can be either fixed or dynamic.
+
+## Static ROI
+A fixed area of the frame that never moves.
+
+Use case:
+- controlled video
+- known shooting area
+- early debugging
+
+## Dynamic ROI
+A moving search region centered around the previously detected ball position.
+
+Example idea:
+
+1. detect the ball
+2. save its center
+3. search nearby in the next frame
+4. update the center again
+
+Dynamic ROI is useful because it reduces false positives and speeds up processing.
+
+However, it depends on having a reliable initial detection.
+
+If the first detection is wrong, the tracker may follow the wrong object.

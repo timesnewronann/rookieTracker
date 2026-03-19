@@ -34,6 +34,8 @@ def playVideoFrameFile():
 
     display_mode = "frame"
 
+    # Region of Interest to help grab the ball 
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -88,11 +90,11 @@ def playVideoFrameFile():
 
             print(f"area={area:.1f}, w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
 
-            # draw the green contours
-            cv.drawContours(frame, [contour], -1, (0, 255, 0), 2)
+            # Draw everything on the debug frame
+            cv.drawContours(debug_frame, [contour], -1, (0, 255, 0), 2)
 
             # blue bounding box
-            cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+            cv.rectangle(debug_frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
             cv.putText(
                 debug_frame,
                 f"{aspect_ratio:.2f}",
@@ -103,7 +105,7 @@ def playVideoFrameFile():
                 1
             )
 
-            cv.imwrite("debug_frame.jpg", frame)
+        cv.imwrite("debug_frame.jpg", debug_frame)
 
         if display_mode == "frame":
             cv.imshow("ShotTracker", debug_frame)
