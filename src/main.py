@@ -9,6 +9,12 @@ def playVideoFrameFile():
     # 2. Ask OpenCV to open the video
     cap = cv.VideoCapture(video_path)
 
+    # 3. Check whether the video was opened successfully
+    if not cap.isOpened():
+        print("Error: Could not open video.")
+        return
+
+    # ---METADATA---
     # print the video's width, height, fps, frame count, duration
     video_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
     print(f"Video Width: {int(video_width)}")
@@ -24,11 +30,7 @@ def playVideoFrameFile():
 
     # duration = frame_count / fps
     print(f"Duration: {int(frame_count) / int(fps)}")
-
-    # 3. Check whether the video was opened successfully
-    if not cap.isOpened():
-        print("Error: Could not open video.")
-        return
+    # ---METADATA---
 
     # 4. Repeatedly read the next frame
     while True:
@@ -65,13 +67,13 @@ def playVideoFrameFile():
         for contour in contours:
             # get the area
             area = cv.contourArea(contour)
-
-            # Skip tiny areas
-            if area < 300:
+            
+            # draw contour with a smaller test threshold
+            if area < 100:
                 continue
 
-        # draw the contours
-        cv.drawContours(frame, [contour], -1, (0, 255, 0), 2)
+             # draw the contours
+            cv.drawContours(frame, [contour], -1, (0, 255, 0), 2)
 
         # 6. Show the frame
         cv.imshow('frame', frame)
@@ -86,9 +88,9 @@ def playVideoFrameFile():
         if key == ord('q'):
             break
 
-        # Show mask
-        elif cv.waitKey(1) == ord('m'):
-            pass
+        # # Show mask
+        # elif cv.waitKey(1) == ord('m'):
+        #     pass
 
     # 8. Release the video object
     cap.release()

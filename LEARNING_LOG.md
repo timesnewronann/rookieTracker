@@ -411,7 +411,7 @@ Example:
 contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 ```
 
-# Lesson Filtering COntours by Size
+# Lesson Filtering Contours by Size
 
 After detecting contours from a mask, many of them may represent noise.
 
@@ -440,3 +440,22 @@ Examples:
 if area < 300:
     continue
 ```
+
+# Lesson - Area Filtering Is Not Enough
+
+Filtering contours by area removes small noise
+This doesn't gurantee that the remaining object is the basketball.
+
+In the video, larger orange objects such as:
+- the shot clock
+- the cone and pole
+
+Still pass the size filter 
+
+Contour area alone is not enough to identify the basketball.
+
+To improve detection, we need additional filters such as:
+- shape
+- position 
+- motion
+
