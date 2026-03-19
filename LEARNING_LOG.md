@@ -560,14 +560,17 @@ ROI is one of the most practical ways to improve a classical computer vision pip
 A Region of Interest (ROI) can be either fixed or dynamic.
 
 ## Static ROI
+
 A fixed area of the frame that never moves.
 
 Use case:
+
 - controlled video
 - known shooting area
 - early debugging
 
 ## Dynamic ROI
+
 A moving search region centered around the previously detected ball position.
 
 Example idea:
@@ -582,3 +585,27 @@ Dynamic ROI is useful because it reduces false positives and speeds up processin
 However, it depends on having a reliable initial detection.
 
 If the first detection is wrong, the tracker may follow the wrong object.
+
+# Lesson 23 — Why ROI Comes Before Smarter Filtering
+
+When false positives appear across the whole frame, the best next step is often to reduce the search space.
+
+A Region of Interest (ROI) helps by limiting detection to the area where the basketball is actually likely to appear.
+
+Benefits:
+
+- fewer false positives
+- cleaner masks
+- fewer contours to compare
+- simpler debugging
+
+For this project, a static ROI should be added before more advanced filtering or dynamic tracking.
+
+Important coordinate rule:
+
+If a contour is found inside the ROI at `(x, y)`, its position in the full frame is:
+
+```python
+full_x = roi_x1 + x
+full_y = roi_y1 + y
+```
