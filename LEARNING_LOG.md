@@ -429,7 +429,6 @@ OpenCV provides:
 cv.contourArea(contour)
 ```
 
-
 # Lesson Threshold Tradeoffs
 
 Contour area filtering helps remove noise, but the threshold must be chosen carefully.
@@ -447,15 +446,74 @@ Filtering contours by area removes small noise
 This doesn't gurantee that the remaining object is the basketball.
 
 In the video, larger orange objects such as:
+
 - the shot clock
 - the cone and pole
 
-Still pass the size filter 
+Still pass the size filter
 
 Contour area alone is not enough to identify the basketball.
 
 To improve detection, we need additional filters such as:
+
 - shape
-- position 
+- position
 - motion
 
+# Lesson - Bounding Rectangles
+
+When we detect a contour, draw a bounding rectangle around it
+
+OpenCV function:
+
+```python
+x, y, w, h = cv.boundingRect(contour)
+```
+
+# Lesson - Debug filters one at a Time
+
+Filter may be rejecting the object before drawing happens.
+
+Debugging Strategy:
+
+1. Remove the newest filter
+2. Confirm the object draws again
+3. Print intermediate values
+4. Re-Add the filter carefully
+
+Makes it easier to identify whether the issue comes from:
+
+- masking
+- contour detection
+- shape threshold
+- drawing location
+
+# Lesson - Debugging Fast Video is difficult
+
+When drawings do not appear clearly on video output, the problem may be visual inspection rather than the drawing code.
+
+Common causes:
+
+- video moves too fast
+- detected objects are very small
+- annotations are too thin
+- the user is looking at the wrong output window
+
+A strong debugging technique is to:
+
+- pause on each frame with `cv.waitKey(0)`
+- save an annotated frame with `cv.imwrite(...)`
+- increase line thickness
+- add text labels to detected objects
+
+# Lesson - A Bad Contour == A Bad Mask
+
+If contour measurements mostly describe poles, strips, or small fragments, the issue is often earlier in the pipeline.
+
+Bad contour output usually means:
+
+- the color mask is too noisy
+- the target object is fragmented
+- the HSV range is not isolating the object well
+
+This means contour filtering cannot fully solve the problem unless the mask is improved first.

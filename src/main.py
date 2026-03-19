@@ -32,6 +32,8 @@ def playVideoFrameFile():
     print(f"Duration: {int(frame_count) / int(fps)}")
     # ---METADATA---
 
+    display_mode = "frame"
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -44,6 +46,9 @@ def playVideoFrameFile():
 
         # Resize the frame
         frame = cv.resize(frame, (1280, 720))
+
+        # debug
+        debug_frame = frame.copy()
 
         # Convert from BGR to HSV
         hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
@@ -67,30 +72,61 @@ def playVideoFrameFile():
         for contour in contours:
             # get the area
             area = cv.contourArea(contour)
-            
+
             # draw contour with a smaller test threshold
             if area < 100:
                 continue
 
-             # draw the contours
+            x, y, w, h = cv.boundingRect(contour)
+
+            # Compute the aspect ratio
+            aspect_ratio = w / h
+
+            # add a filter
+            # if aspect_ratio < 0.7 or aspect_ratio > 1.3:
+            #     continue
+
+            print(f"area={area:.1f}, w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
+
+            # draw the green contours
             cv.drawContours(frame, [contour], -1, (0, 255, 0), 2)
 
-        # 6. Show the frame
-        cv.imshow('frame', frame)
+            # blue bounding box
+            cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+            cv.putText(
+                debug_frame,
+                f"{aspect_ratio:.2f}",
+                (x, y - 10),
+                cv.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 255),
+                1
+            )
 
-        # show the mask
-        cv.imshow('mask', mask)
+            cv.imwrite("debug_frame.jpg", frame)
 
-        cv.imshow('res', res)
+        if display_mode == "frame":
+            cv.imshow("ShotTracker", debug_frame)
 
-        key = cv.waitKey(5) & 0xFF
-        # 7. If user presses q stop
-        if key == ord('q'):
+        elif display_mode == "mask":
+            cv.imshow("ShotTracker", mask)
+
+        elif display_mode == "res":
+            cv.imshow("ShotTracker", res)
+
+        key = cv.waitKey(0) & 0xFF
+
+        if key == ord("q"):
             break
-
-        # # Show mask
-        # elif cv.waitKey(1) == ord('m'):
-        #     pass
+        elif key == ord("1"):
+            display_mode = "frame"
+        elif key == ord("2"):
+            display_mode = "mask"
+        elif key == ord("3"):
+            display_mode = "res"
+        elif key == ord("s"):
+            cv.imwrite("debug_frame.jpg", debug_frame)
+            print("Saved debug_frame.jpg")
 
     # 8. Release the video object
     cap.release()
