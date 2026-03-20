@@ -1017,3 +1017,15 @@ Good tracking architecture:
 - initialize near player
 - track by previous ball position
 - use hoop region as a late-flight guide
+
+# Lesson 53 — The Hoop Region Should Expand the ROI, Not Replace It
+
+A basketball tracker cannot use the hoop region as the only ROI because the ball starts near the player, not near the basket.
+
+A better design is:
+
+- initialize with a broad player-side ROI
+- track with a smaller dynamic ROI around the ball
+- when the ball approaches the basket, expand the ROI to also include the hoop region
+
+This keeps the tracker focused on the ball while still helping it stay stable near the rim.

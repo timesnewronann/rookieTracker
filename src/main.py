@@ -132,11 +132,13 @@ def playVideoFrameFile():
             # If ball is entering late flight, include hoop region too
             # Making the hoop a late-flight expansion target for the ROI
             if last_x > 900:
+                # left/ top
                 roi_x1 = min(roi_x1, hoop_x1)
                 roi_y1 = min(roi_y1, hoop_y1)
-                roi_x2 = min(roi_x2, hoop_x2)
-                roi_y2 = min(roi_y2, hoop_y2)
-            
+
+                # right/ bottom
+                roi_x2 = max(roi_x2, hoop_x2)
+                roi_y2 = max(roi_y2, hoop_y2)
 
         # Draw the manual hoop on the debug frame
         cv.rectangle(debug_frame, (hoop_x1, hoop_y1), (hoop_x2, hoop_y2), (0, 255, 255), 2)
