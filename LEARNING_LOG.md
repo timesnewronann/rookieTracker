@@ -632,3 +632,19 @@ To draw them correctly on the full frame, the ROI offset must be added:
 full_x = roi_x1 + x
 full_y = roi_y1 + y
 ```
+
+# Lesson 26 — ROI Changes Detection, Not Visualization
+
+When using a Region of Interest (ROI):
+
+- Detection happens ONLY inside the ROI
+- Mask and contours are computed from the ROI
+- Coordinates from the ROI must be translated back to the full frame
+
+Key idea:
+
+ROI reduces the search space, which improves detection quality by removing irrelevant regions.
+
+Pipeline:
+
+full frame → crop ROI → HSV → mask → contours → offset → draw on full frame
