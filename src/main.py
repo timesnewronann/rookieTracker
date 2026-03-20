@@ -88,10 +88,10 @@ def playVideoFrameFile():
     MAX_TRAIL_POINTS = 30
 
     # hardcoded hoop region
-    hoop_x1 = 1040
-    hoop_y1 = 240
-    hoop_x2 = 1130
-    hoop_y2 = 320
+    hoop_roi_x1 = 1040
+    hoop_roi_y1 = 240
+    hoop_roi_x2 = 1130
+    hoop_roi_y2 = 320
 
     # 4. Repeatedly read the next frame
     while True:
@@ -113,7 +113,7 @@ def playVideoFrameFile():
         frame_height, frame_width = frame.shape[:2]
 
         # ---- DYNAMIC ROI LOGIC ----
-        # define static ROI bounds
+        # Start with either static or dynamic ball ROI
         if not ball_path:
             roi_x1 = 250
             roi_y1 = 300
@@ -133,15 +133,21 @@ def playVideoFrameFile():
             # Making the hoop a late-flight expansion target for the ROI
             if last_x > 900:
                 # left/ top
-                roi_x1 = min(roi_x1, hoop_x1)
-                roi_y1 = min(roi_y1, hoop_y1)
+                roi_x1 = min(roi_x1, hoop_roi_x1)
+                roi_y1 = min(roi_y1, hoop_roi_y1)
 
                 # right/ bottom
-                roi_x2 = max(roi_x2, hoop_x2)
-                roi_y2 = max(roi_y2, hoop_y2)
+                roi_x2 = max(roi_x2, hoop_roi_x2)
+                roi_y2 = max(roi_y2, hoop_roi_y2)
+
+        # Final Clamp
+        roi_x1 = max(0, roi_x1)
+        roi_y1 = max(0, roi_y1)
+        roi_x2 = min(frame_width, roi_x2)
+        roi_y2 = min(frame_height, roi_y2)
 
         # Draw the manual hoop on the debug frame
-        cv.rectangle(debug_frame, (hoop_x1, hoop_y1), (hoop_x2, hoop_y2), (0, 255, 255), 2)
+        cv.rectangle(debug_frame, (hoop_roi_x1, hoop_roi_y1), (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2)
 
         # Draw the ROI rectangle on debug_frame
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)

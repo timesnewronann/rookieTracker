@@ -1029,3 +1029,16 @@ A better design is:
 - when the ball approaches the basket, expand the ROI to also include the hoop region
 
 This keeps the tracker focused on the ball while still helping it stay stable near the rim.
+
+# Lesson 54 — Union ROI = Rectangle Math
+
+A “union ROI” is not a special OpenCV function. It is just one rectangle expanded to include another rectangle.
+
+If rectangle A is `(x1, y1, x2, y2)` and rectangle B is `(hx1, hy1, hx2, hy2)`, then the union rectangle is:
+
+```python
+x1 = min(x1, hx1)
+y1 = min(y1, hy1)
+x2 = max(x2, hx2)
+y2 = max(y2, hy2)
+```
