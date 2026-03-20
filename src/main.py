@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import math
 
 
 def playVideoFrameFile():
@@ -88,6 +89,22 @@ def playVideoFrameFile():
 
             # draw contour with a smaller test threshold
             if area < 100:
+                continue
+
+            # computer permiter and circularity inside the contour loop
+            perimeter = cv.arcLength(contour, True)
+
+            if perimeter == 0:
+                continue
+
+            circularity = 4 * math.pi * area / (perimeter * perimeter)
+
+            # print circularity
+            print(f"area={area:.1f}, circularity={circularity:.2f}")
+
+            # First Test filter
+            # If it's not circular enough move on 
+            if circularity < 0.45:
                 continue
 
             x, y, w, h = cv.boundingRect(contour)

@@ -648,3 +648,37 @@ ROI reduces the search space, which improves detection quality by removing irrel
 Pipeline:
 
 full frame → crop ROI → HSV → mask → contours → offset → draw on full frame
+
+# Lesson 27 — ROI Reduces Search Space, But Does Not Identify the Object
+
+A Region of Interest (ROI) helps remove irrelevant parts of the frame, but it does not automatically separate the basketball from other nearby objects.
+
+In this project, both the basketball and the orange shorts stripe can still exist inside the ROI.
+
+This means ROI is only a coarse filter.
+
+It answers:
+
+- where to search
+
+But it does not answer:
+
+- which object is the basketball
+
+To solve that, additional filters are needed, such as:
+
+- shape
+- circularity
+- motion
+- tracking consistency
+
+# Lesson 28 — Circularity
+
+Circularity measures how close a contour is to a circle.
+
+Formula:
+
+```python
+circularity = 4 * math.pi * area / (perimeter * perimeter)
+```
+
