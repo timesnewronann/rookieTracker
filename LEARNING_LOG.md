@@ -879,3 +879,41 @@ To fix this, the candidate selection rule itself must switch:
 
 - first frame: maximize circularity
 - later frames: minimize distance to previous center
+
+# Lesson 44 — Use Player Proximity for Initialization, Then Ball-Centered Tracking for Follow-Through
+
+When multiple basketballs appear in the frame, the hardest problem is deciding which ball to start tracking.
+
+A useful strategy is:
+
+## Initialization
+
+Choose the ball candidate that is closest to the player region (or hands/body area).
+
+## Tracking
+
+After the correct ball is initialized, switch to ball-centered tracking using:
+
+- previous center
+- nearest-neighbor matching
+- dynamic ROI
+
+This avoids locking onto a stationary ball on the floor while still allowing the tracked ball to travel away from the player after release.
+
+# Lesson 44 — Use Player Proximity for Initialization, Then Ball-Centered Tracking for Follow-Through
+
+When multiple basketballs appear in the frame, the hardest problem is deciding which ball to start tracking.
+
+A useful strategy is:
+
+## Initialization
+Choose the ball candidate that is closest to the player region (or hands/body area).
+
+## Tracking
+After the correct ball is initialized, switch to ball-centered tracking using:
+
+- previous center
+- nearest-neighbor matching
+- dynamic ROI
+
+This avoids locking onto a stationary ball on the floor while still allowing the tracked ball to travel away from the player after release.

@@ -133,7 +133,6 @@ def playVideoFrameFile():
         # best_circularity = 0
         best_score = None
 
-
         # loop through the contours
         for contour in contours:
 
@@ -197,12 +196,6 @@ def playVideoFrameFile():
                     best_score = distance
                     best_candidate = candidate
 
-            # higher circularity == better
-            # if circularity > best_circularity:
-            #     best_circularity = circularity
-            #     best_candidate = (full_x, full_y, w, h, center_x,
-            #                       center_y, aspect_ratio, circularity)
-
         if best_candidate:
             # Unpack best_candidate and use best_candidates values
             full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
@@ -225,17 +218,6 @@ def playVideoFrameFile():
                 1
             )
 
-        # When a contour is the best ball candidate append it into our list
-        # if best_candidate:
-        #     # Unpack best_candidate and use best_candidates values
-        #     full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
-
-        #     ball_path.append((center_x, center_y))
-
-        #     # blue bounding box
-        #     cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
-
-        #     cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
         # Draw the trail
         for i in range(1, len(ball_path)):
             cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255), 2)
