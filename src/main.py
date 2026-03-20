@@ -103,11 +103,24 @@ def playVideoFrameFile():
         # copy for drawing
         debug_frame = frame.copy()
 
-        # define ROI bounds
-        roi_x1 = 250
-        roi_y1 = 300
-        roi_x2 = 1050
-        roi_y2 = 720
+        # Updating ROI for dynamic ROI
+        frame_height, frame_width = frame.shape[:2]
+
+        # define static ROI bounds
+        if not ball_path:
+            roi_x1 = 250
+            roi_y1 = 300
+            roi_x2 = 1050
+            roi_y2 = 720
+        else:
+            last_x, last_y = ball_path[-1]
+            margin = 120
+
+            # clamp the ROI
+            roi_x1 = max(0, last_x - margin)
+            roi_y1 = max(0, last_y - margin)
+            roi_x2 = min(frame_width, last_x + margin)
+            roi_y2 = min(frame_height, last_y + margin)
 
         # Draw the ROI rectangle on debug_frame
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)

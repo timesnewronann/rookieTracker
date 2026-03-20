@@ -946,3 +946,47 @@ A simple solution is to track missed frames:
 - if missed count gets too high → reset the current path
 
 This helps separate one valid track from stale history.
+
+# Lesson 48 — One Data Structure Can Temporarily Do Two Jobs, But It Should Eventually Be Split
+
+In the current prototype, `ball_path` is being used for both:
+
+- drawing the trail
+- remembering the last tracked center
+
+This works for early versions, but later it is cleaner to separate:
+
+- trajectory history
+- tracker state
+
+That makes reset logic and shot segmentation easier to reason about.
+
+# Lesson 49 — Shorter Trails Are Easier to Debug
+
+A long trajectory history can clutter the frame and make tracking mistakes harder to interpret.
+
+A simple improvement is to cap trail length:
+
+```python
+MAX_TRAIL_POINTS = 30
+if len(ball_path) > MAX_TRAIL_POINTS:
+    ball_path.pop(0)
+```
+
+# Lesson 50 — Dynamic ROI Follows the Last Tracked Position
+
+A static ROI is useful for initialization, but once a ball is being tracked, the search area can be reduced further.
+
+A dynamic ROI is built around the previous tracked center.
+
+Example:
+
+```python
+last_x, last_y = ball_path[-1]
+margin = 120
+
+roi_x1 = max(0, last_x - margin)
+roi_y1 = max(0, last_y - margin)
+roi_x2 = min(frame_width, last_x + margin)
+roi_y2 = min(frame_height, last_y + margin)
+```
