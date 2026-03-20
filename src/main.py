@@ -76,6 +76,14 @@ def playVideoFrameFile():
 
     # Track the ball_path
     ball_path = []
+
+    # track jump distance between tracked balls
+    MAX_JUMP_DISTANCE = 120
+
+    # Track the missed consecutive frames
+    missed_frames = 0
+    MAX_MISSED_FRAMES = 3
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -192,11 +200,15 @@ def playVideoFrameFile():
                 last_x, last_y = ball_path[-1]
                 distance = math.hypot(center_x - last_x, center_y - last_y)
 
+                if distance > MAX_JUMP_DISTANCE:
+                    continue
+
                 if best_score is None or distance < best_score:
                     best_score = distance
                     best_candidate = candidate
 
         if best_candidate:
+            missed_frames = 0
             # Unpack best_candidate and use best_candidates values
             full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
 
@@ -217,6 +229,11 @@ def playVideoFrameFile():
                 (255, 255, 255),
                 1
             )
+        else:
+            missed_frames += 1
+
+        if missed_frames > MAX_MISSED_FRAMES:
+            ball_path = []
 
         # Draw the trail
         for i in range(1, len(ball_path)):

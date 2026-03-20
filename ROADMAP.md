@@ -38,11 +38,11 @@ Detect the basketball reliably in each frame
 
 ## 🔧 Tasks
 
-- [ ] Tune HSV range for basketball color
-- [ ] Visualize mask, contours, and debug overlays
-- [ ] Filter contours by area
-- [ ] Add **static ROI** to reduce search space
-- [ ] Improve mask quality (reduce fragmentation)
+- [x] Tune HSV range for basketball color
+- [x] Visualize mask, contours, and debug overlays
+- [x] Filter contours by area
+- [x] Add **static ROI** to reduce search space
+- [x] Improve mask quality (reduce fragmentation)
 
 ## ✅ Milestone
 

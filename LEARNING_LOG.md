@@ -907,9 +907,11 @@ When multiple basketballs appear in the frame, the hardest problem is deciding w
 A useful strategy is:
 
 ## Initialization
+
 Choose the ball candidate that is closest to the player region (or hands/body area).
 
 ## Tracking
+
 After the correct ball is initialized, switch to ball-centered tracking using:
 
 - previous center
@@ -917,3 +919,30 @@ After the correct ball is initialized, switch to ball-centered tracking using:
 - dynamic ROI
 
 This avoids locking onto a stationary ball on the floor while still allowing the tracked ball to travel away from the player after release.
+
+# Lesson 46 — Nearest Neighbor Needs a Distance Gate
+
+Nearest-neighbor tracking alone is not enough.
+
+Even if a candidate is the closest, it may still be too far away to be the same object.
+
+Solution:
+
+- compute distance to previous center
+- reject candidates beyond a maximum threshold
+
+This prevents identity switches and unrealistic jumps in tracking.
+
+# Lesson 47 — A Tracker Needs a “Lost Track” Rule
+
+Even with nearest-neighbor selection and a jump-distance threshold, tracking can still fail temporarily.
+
+If the tracker cannot find a valid candidate for several frames, old path history should not continue forever.
+
+A simple solution is to track missed frames:
+
+- if a valid candidate is found → reset missed count
+- if no valid candidate is found → increment missed count
+- if missed count gets too high → reset the current path
+
+This helps separate one valid track from stale history.
