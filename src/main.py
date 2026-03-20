@@ -87,6 +87,12 @@ def playVideoFrameFile():
     # Cap the trail length to avoid long trail history cluttering the frame
     MAX_TRAIL_POINTS = 30
 
+    # hardcoded hoop region
+    hoop_x1 = 1040
+    hoop_y1 = 240
+    hoop_x2 = 1130
+    hoop_y2 = 320
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -106,6 +112,7 @@ def playVideoFrameFile():
         # Updating ROI for dynamic ROI
         frame_height, frame_width = frame.shape[:2]
 
+        # ---- DYNAMIC ROI LOGIC ----
         # define static ROI bounds
         if not ball_path:
             roi_x1 = 250
@@ -114,13 +121,25 @@ def playVideoFrameFile():
             roi_y2 = 720
         else:
             last_x, last_y = ball_path[-1]
-            margin = 120
+            margin = 160
 
             # clamp the ROI
             roi_x1 = max(0, last_x - margin)
             roi_y1 = max(0, last_y - margin)
             roi_x2 = min(frame_width, last_x + margin)
             roi_y2 = min(frame_height, last_y + margin)
+
+            # If ball is entering late flight, include hoop region too
+            # Making the hoop a late-flight expansion target for the ROI
+            if last_x > 900:
+                roi_x1 = min(roi_x1, hoop_x1)
+                roi_y1 = min(roi_y1, hoop_y1)
+                roi_x2 = min(roi_x2, hoop_x2)
+                roi_y2 = min(roi_y2, hoop_y2)
+            
+
+        # Draw the manual hoop on the debug frame
+        cv.rectangle(debug_frame, (hoop_x1, hoop_y1), (hoop_x2, hoop_y2), (0, 255, 255), 2)
 
         # Draw the ROI rectangle on debug_frame
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)

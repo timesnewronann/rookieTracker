@@ -990,3 +990,30 @@ roi_y1 = max(0, last_y - margin)
 roi_x2 = min(frame_width, last_x + margin)
 roi_y2 = min(frame_height, last_y + margin)
 ```
+
+# Lesson 51 — Scene Knowledge Can Improve Tracking
+
+Once a tracker is reasonably following the ball, knowledge about important scene regions can improve stability.
+
+In basketball shot tracking, the hoop area is especially important.
+
+A practical first step is to define a manual hoop region for a controlled clip.
+
+This region can later help with:
+
+- constraining late-flight tracking
+- detecting rim approach
+- detecting make/miss events
+- resetting the tracker after a completed shot
+
+# Lesson 52 — Use the Hoop as a Constraint, Not the Only Target
+
+The hoop should not replace ball-centered tracking.
+
+Instead, the hoop region should act as an additional constraint during the later phase of the shot.
+
+Good tracking architecture:
+
+- initialize near player
+- track by previous ball position
+- use hoop region as a late-flight guide
