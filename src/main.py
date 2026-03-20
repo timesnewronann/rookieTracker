@@ -87,6 +87,9 @@ def playVideoFrameFile():
     # Cap the trail length to avoid long trail history cluttering the frame
     MAX_TRAIL_POINTS = 30
 
+    # Cap the Hoop distance
+    MAX_HOOP_DISTANCE = 140
+
     # hardcoded hoop region
     hoop_roi_x1 = 1040
     hoop_roi_y1 = 240
@@ -147,7 +150,8 @@ def playVideoFrameFile():
         roi_y2 = min(frame_height, roi_y2)
 
         # Draw the manual hoop on the debug frame
-        cv.rectangle(debug_frame, (hoop_roi_x1, hoop_roi_y1), (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2)
+        cv.rectangle(debug_frame, (hoop_roi_x1, hoop_roi_y1),
+                     (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2)
 
         # Draw the ROI rectangle on debug_frame
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
@@ -220,6 +224,10 @@ def playVideoFrameFile():
             center_x = full_x + w // 2
             center_y = full_y + h // 2
 
+            # Compute the hoop center
+            hoop_center_x = (hoop_roi_x1 + hoop_roi_x2) // 2
+            hoop_center_y = (hoop_roi_y1 + hoop_roi_y2) // 2
+
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
                   f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
@@ -244,6 +252,15 @@ def playVideoFrameFile():
                 distance = math.hypot(center_x - last_x, center_y - last_y)
 
                 if distance > MAX_JUMP_DISTANCE:
+                    continue
+
+                # reject candidates that are too far from the hoop zone
+                if last_x > 900:
+                    # calculate the distance to the hoop
+                    distance_to_hoop = math.hypot(
+                        center_x - hoop_center_x, center_y - hoop_center_y)
+
+                if distance_to_hoop > MAX_HOOP_DISTANCE:
                     continue
 
                 if best_score is None or distance < best_score:
