@@ -1,6 +1,39 @@
+import math
 import cv2 as cv
 import numpy as np
-import math
+
+clicked_frame = None
+
+
+def on_mouse(event, x, y, flags, param):
+    global clicked_frame
+
+    if event == cv.EVENT_LBUTTONDOWN:
+        bgr_pixel = clicked_frame[y, x]
+        hsv_frame = cv.cvtColor(clicked_frame, cv.COLOR_BGR2HSV)
+        hsv_pixel = hsv_frame[y, x]
+
+        print(f"Clicked at (x={x}, y={y})")
+        print(f"BGR pixel: {bgr_pixel}")
+        print(f"HSV pixel: {hsv_pixel}")
+
+        patch_size = 5
+        half = patch_size // 2
+
+        y1 = max(0, y - half)
+        y2 = min(clicked_frame.shape[0], y + half + 1)
+        x1 = max(0, x - half)
+        x2 = min(clicked_frame.shape[1], x + half + 1)
+
+        bgr_patch = clicked_frame[y1:y2, x1:x2]
+        hsv_patch = hsv_frame[y1:y2, x1:x2]
+
+        avg_bgr = np.mean(bgr_patch, axis=(0, 1))
+        avg_hsv = np.mean(hsv_patch, axis=(0, 1))
+
+        print(f"Average BGR in {patch_size}x{patch_size} patch: {avg_bgr}")
+        print(f"Average HSV in {patch_size}x{patch_size} patch: {avg_hsv}")
+        print("-" * 50)
 
 
 def playVideoFrameFile():
@@ -64,7 +97,7 @@ def playVideoFrameFile():
         roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
 
         # Updated lower orange range it was more yellow before
-        lower_orange = np.array([5, 140, 120])
+        lower_orange = np.array([6, 110, 80])
 
         # Define Upper orange range
         upper_orange = np.array([18, 255, 255])
@@ -106,7 +139,7 @@ def playVideoFrameFile():
 
             # Second Test filter
             # If it's not circular enough move on
-            if circularity < 0.30:
+            if circularity < 0.25:
                 continue
 
             x, y, w, h = cv.boundingRect(contour)
