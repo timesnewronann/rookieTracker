@@ -84,6 +84,9 @@ def playVideoFrameFile():
     missed_frames = 0
     MAX_MISSED_FRAMES = 3
 
+    # Cap the trail length to avoid long trail history cluttering the frame
+    MAX_TRAIL_POINTS = 30
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -213,6 +216,10 @@ def playVideoFrameFile():
             full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
 
             ball_path.append((center_x, center_y))
+
+            # If we exceed our trail length remove the oldest point
+            if len(ball_path) > MAX_TRAIL_POINTS:
+                ball_path.pop(0)
 
             # blue bounding box
             cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
