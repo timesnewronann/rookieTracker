@@ -727,3 +727,47 @@ Example tuning idea:
 lower_orange = np.array([5, 140, 120])
 upper_orange = np.array([18, 255, 255])
 ```
+
+# Lesson 32 — Parameter Tuning Often Overshoots
+
+When tuning HSV values, it is common to overshoot.
+
+Example:
+
+- broad range → too many false positives
+- narrow range → target disappears
+
+This does not mean HSV tuning failed. It means the range needs to be adjusted toward the middle.
+
+A good tuning strategy is:
+
+1. make one small change
+2. test the result
+3. compare what improved and what was lost
+4. adjust gradually
+
+# Lesson 33 — Measure the Real Pixel Values Before Guessing
+
+When color thresholds are hard to tune, a better approach is to inspect the actual color values of the target object.
+
+Instead of guessing HSV ranges, we can sample pixels directly from the frame.
+
+Best practice:
+
+- pause on a frame where the object is visible
+- click on the object
+- print BGR and HSV values
+- average a small patch instead of using only one pixel
+
+This makes threshold tuning data-driven instead of guess-based.
+
+# Lesson 34 — Python Scope Can Break Debug Tools
+
+A variable defined outside a function is global.
+
+Example:
+
+```python
+clicked_frame = None
+```
+

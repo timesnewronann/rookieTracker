@@ -8,6 +8,11 @@ clicked_frame = None
 def on_mouse(event, x, y, flags, param):
     global clicked_frame
 
+    # protect agaisnt accidental clicks before a frame is assigned
+    if clicked_frame is None:
+        print("No frame available for sampling yet.")
+        return
+
     if event == cv.EVENT_LBUTTONDOWN:
         bgr_pixel = clicked_frame[y, x]
         hsv_frame = cv.cvtColor(clicked_frame, cv.COLOR_BGR2HSV)
@@ -37,6 +42,7 @@ def on_mouse(event, x, y, flags, param):
 
 
 def playVideoFrameFile():
+    global clicked_frame
     # 1. set the video path
     video_path = "data/raw/trimmedJumper.mp4"
 
@@ -68,6 +74,8 @@ def playVideoFrameFile():
 
     display_mode = "frame"
 
+    # Track the ball_path
+    ball_path = []
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -97,10 +105,10 @@ def playVideoFrameFile():
         roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
 
         # Updated lower orange range it was more yellow before
-        lower_orange = np.array([6, 110, 80])
+        lower_orange = np.array([2, 100, 90])
 
         # Define Upper orange range
-        upper_orange = np.array([18, 255, 255])
+        upper_orange = np.array([12, 255, 255])
 
         # # convert roi to hsv, not the full frame
         # Convert from BGR to HSV
@@ -156,6 +164,9 @@ def playVideoFrameFile():
 
             cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
 
+            # When a contour is a ball candidate append it into our list
+            ball_path.append((center_x, center_y))
+
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
                   f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
@@ -180,6 +191,8 @@ def playVideoFrameFile():
 
         if display_mode == "frame":
             cv.imshow("ShotTracker", debug_frame)
+            clicked_frame = frame.copy()
+            cv.setMouseCallback("ShotTracker", on_mouse)
 
         elif display_mode == "mask":
             cv.imshow("ShotTracker", mask)
