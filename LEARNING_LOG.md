@@ -609,3 +609,26 @@ If a contour is found inside the ROI at `(x, y)`, its position in the full frame
 full_x = roi_x1 + x
 full_y = roi_y1 + y
 ```
+
+# Lesson 25 — Separate Detection Space from Display Space
+
+When using an ROI, detection happens inside the cropped image, but annotations are usually drawn on the full frame.
+
+This creates two coordinate systems:
+
+## Detection space
+
+The cropped ROI
+
+## Display space
+
+The full frame
+
+Contours and bounding boxes found inside the ROI use ROI-local coordinates.
+
+To draw them correctly on the full frame, the ROI offset must be added:
+
+```python
+full_x = roi_x1 + x
+full_y = roi_y1 + y
+```

@@ -34,8 +34,6 @@ def playVideoFrameFile():
 
     display_mode = "frame"
 
-    # Region of Interest to help grab the ball 
-
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -49,11 +47,20 @@ def playVideoFrameFile():
         # Resize the frame
         frame = cv.resize(frame, (1280, 720))
 
-        # debug
+        # copy for drawing
         debug_frame = frame.copy()
 
-        # Convert from BGR to HSV
-        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        # define ROI bounds
+        roi_x1 = 250
+        roi_y1 = 300
+        roi_x2 = 1050
+        roi_y2 = 720
+
+        # Draw the ROI rectangle on debug_frame
+        cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
+
+        # Crop ROI
+        roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
 
         # Define lower orange range
         lower_orange = np.array([10, 100, 100])
@@ -61,11 +68,15 @@ def playVideoFrameFile():
         # Define Upper orange range
         upper_orange = np.array([25, 255, 255])
 
+        # # convert roi to hsv, not the full frame
+        # Convert from BGR to HSV
+        hsv = cv.cvtColor(roi, cv.COLOR_BGR2HSV)
+
         # Create an orange mask from HSV image
         mask = cv.inRange(hsv, lower_orange, upper_orange)
 
-        # Bitwise-AND mask and original image
-        res = cv.bitwise_and(frame, frame, mask=mask)
+        # Bitwise-AND mask ROI
+        res = cv.bitwise_and(roi, roi, mask=mask)
 
         # Find contours from the mask
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -84,21 +95,18 @@ def playVideoFrameFile():
             # Compute the aspect ratio
             aspect_ratio = w / h
 
-            # add a filter
-            # if aspect_ratio < 0.7 or aspect_ratio > 1.3:
-            #     continue
+            full_x = roi_x1 + x
+            full_y = roi_y1 + y
 
             print(f"area={area:.1f}, w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
 
-            # Draw everything on the debug frame
-            cv.drawContours(debug_frame, [contour], -1, (0, 255, 0), 2)
-
+            # update to use full frame
             # blue bounding box
-            cv.rectangle(debug_frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+            cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 3)
             cv.putText(
                 debug_frame,
                 f"{aspect_ratio:.2f}",
-                (x, y - 10),
+                (full_x, max(full_y - 10, 20)),
                 cv.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (255, 255, 255),
