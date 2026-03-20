@@ -1042,3 +1042,25 @@ y1 = min(y1, hy1)
 x2 = max(x2, hx2)
 y2 = max(y2, hy2)
 ```
+
+# Lesson 55 — A Search Region and a Selection Rule Are Different
+
+A union ROI decides where the tracker is allowed to search.
+
+It does not decide which candidate inside that region is correct.
+
+Near the basket, the tracker may still pick the wrong orange object unless an additional scoring or gating rule is used.
+
+A useful late-flight rule is:
+
+- keep the dynamic ROI
+- include the hoop region in the search area
+- reject candidates that are too far from the hoop center
+
+# Lesson 56 — OpenCV ROI in Python Is Usually Just NumPy Slicing
+
+In OpenCV Python, a rectangular ROI is usually applied by slicing the image array:
+
+```python
+roi = frame[y1:y2, x1:x2]
+```

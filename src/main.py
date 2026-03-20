@@ -260,8 +260,8 @@ def playVideoFrameFile():
                     distance_to_hoop = math.hypot(
                         center_x - hoop_center_x, center_y - hoop_center_y)
 
-                if distance_to_hoop > MAX_HOOP_DISTANCE:
-                    continue
+                    if distance_to_hoop > MAX_HOOP_DISTANCE:
+                        continue
 
                 if best_score is None or distance < best_score:
                     best_score = distance
