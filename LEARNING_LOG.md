@@ -771,3 +771,111 @@ Example:
 clicked_frame = None
 ```
 
+# Lesson 35 — Use Real Sampled HSV Values to Guide Thresholds
+
+A sampled basketball patch produced approximately:
+
+```python
+H ≈ 4.6
+S ≈ 127
+V ≈ 134
+```
+
+# Lesson 36 — Once Detection Works, Do Not Expand the Search Space Too Quickly
+
+When the target object is finally detected reliably, the next step is usually not to make the ROI bigger.
+
+A larger ROI can reintroduce false positives and reduce stability.
+
+Better question:
+
+- what is the smallest ROI that still contains the ball during the important motion?
+
+Smaller, correct search spaces usually improve:
+
+- speed
+- stability
+- precision
+
+# Lesson 38 — Tracking Requires One Best Candidate Per Frame
+
+A detector may find multiple valid contours in one frame.
+
+If all of them are appended to the path, the trail becomes a mixture of multiple objects instead of one tracked ball.
+
+A tracker should usually:
+
+1. evaluate all candidate contours
+2. choose one best candidate for the frame
+3. append only that center point to the trajectory
+
+This is the transition from detection to tracking.
+
+# Lesson 39 — A Choppy Trail Can Be Normal at Low FPS
+
+A path can look spaced out when the object moves fast, especially if the video frame rate is low.
+
+In this project, the video is about 23 FPS, so the ball may move a large distance between frames.
+
+This does not necessarily mean points need to be added more often.
+
+It may simply reflect the true sampling rate of the video.
+
+# Lesson 40 — Storing the Best Candidate Is Not Enough if You Still Use the Last Loop Variable
+
+A common bug in tracking code is:
+
+1. correctly identify the best candidate
+2. store it
+3. accidentally append or draw using the last contour variables from the loop
+
+This causes the tracker to jump to the wrong object.
+
+Fix:
+
+After the contour loop, unpack the saved `best_candidate` and use those values for drawing and path updates.
+
+# Lesson 41 — “Best Candidate” Needs Temporal Consistency
+
+Choosing the most circular contour in each frame is not enough when multiple ball-like objects are present.
+
+Example:
+
+- a moving basketball
+- a stationary basketball on the floor
+
+Both can have good circularity.
+
+If the tracker chooses the best candidate independently each frame, it may switch between objects.
+
+This means tracking requires temporal consistency.
+
+A common next rule is:
+
+- on the first frame, choose the best candidate by appearance
+- on later frames, choose the candidate closest to the previously tracked center
+
+# Lesson 42 — Nearest-Neighbor Tracking
+
+Once a tracked object has a previous center point, the next candidate should usually be chosen based on distance to that previous point.
+
+Example:
+
+```python
+last_center = ball_path[-1]
+distance = math.hypot(center_x - last_center[0], center_y - last_center[1])
+```
+
+# Lesson 43 - Computing a Score Is Not the Same as Using it
+
+A common tracking bug is:
+
+1. compute a useful metric like distance to the last center
+2. but still choose candidates using an older rule like max circularity
+
+This means the tracker appears unchanged even though new logic was added.
+
+To fix this, the candidate selection rule itself must switch:
+
+- first frame: maximize circularity
+- later frames: minimize distance to previous center

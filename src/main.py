@@ -128,8 +128,16 @@ def playVideoFrameFile():
         # Find contours from the mask
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
+        # Track the best candidates for tracking
+        best_candidate = None
+        # best_circularity = 0
+        best_score = None
+
+
         # loop through the contours
         for contour in contours:
+
+            # Filter by area
             # get the area
             area = cv.contourArea(contour)
 
@@ -143,10 +151,10 @@ def playVideoFrameFile():
             if perimeter == 0:
                 continue
 
+            # Filter by circularity
             circularity = 4 * math.pi * area / (perimeter * perimeter)
 
             # Second Test filter
-            # If it's not circular enough move on
             if circularity < 0.25:
                 continue
 
@@ -158,23 +166,53 @@ def playVideoFrameFile():
             full_x = roi_x1 + x
             full_y = roi_y1 + y
 
-            # Center Point
+            # Compute the center point
             center_x = full_x + w // 2
             center_y = full_y + h // 2
-
-            cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
-
-            # When a contour is a ball candidate append it into our list
-            ball_path.append((center_x, center_y))
 
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
                   f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
 
-            # update to use full frame
+            # Case 1: first tracked point
+            # Track the candidate with highest circularity
+            candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
+
+            if not ball_path:
+                # pick best by circularity
+                score = circularity
+                if best_score is None or score > best_score:
+                    best_score = score
+                    best_candidate = candidate
+            else:
+                # Case 2: already tracking
+                # Track the candidate with the smallest distance to ball_path[-1]
+                # use distance to last tracked point as the score
+                # For each surviving candidate compute distance to last_center
+                # Lower distance == better
+                last_x, last_y = ball_path[-1]
+                distance = math.hypot(center_x - last_x, center_y - last_y)
+
+                if best_score is None or distance < best_score:
+                    best_score = distance
+                    best_candidate = candidate
+
+            # higher circularity == better
+            # if circularity > best_circularity:
+            #     best_circularity = circularity
+            #     best_candidate = (full_x, full_y, w, h, center_x,
+            #                       center_y, aspect_ratio, circularity)
+
+        if best_candidate:
+            # Unpack best_candidate and use best_candidates values
+            full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
+
+            ball_path.append((center_x, center_y))
+
             # blue bounding box
             cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
 
+            cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
             # Show aspect ratio and circularity
             label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
             cv.putText(
@@ -186,6 +224,21 @@ def playVideoFrameFile():
                 (255, 255, 255),
                 1
             )
+
+        # When a contour is the best ball candidate append it into our list
+        # if best_candidate:
+        #     # Unpack best_candidate and use best_candidates values
+        #     full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
+
+        #     ball_path.append((center_x, center_y))
+
+        #     # blue bounding box
+        #     cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
+
+        #     cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
+        # Draw the trail
+        for i in range(1, len(ball_path)):
+            cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255), 2)
 
         cv.imwrite("debug_frame.jpg", debug_frame)
 
