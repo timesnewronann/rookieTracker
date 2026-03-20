@@ -96,6 +96,12 @@ def playVideoFrameFile():
     hoop_roi_x2 = 1130
     hoop_roi_y2 = 320
 
+    # Larger basket approach box -> give our track a larger valid late-flight area
+    approach_x1 = 900
+    approach_y1 = 40
+    approach_x2 = 1240
+    approach_y2 = 360
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -254,14 +260,20 @@ def playVideoFrameFile():
                 if distance > MAX_JUMP_DISTANCE:
                     continue
 
-                # reject candidates that are too far from the hoop zone
-                if last_x > 900:
-                    # calculate the distance to the hoop
-                    distance_to_hoop = math.hypot(
-                        center_x - hoop_center_x, center_y - hoop_center_y)
-
-                    if distance_to_hoop > MAX_HOOP_DISTANCE:
+                # reject candidates that are too far from the hoop zone, update the flight to also take vertical position
+                if last_x > 900 and last_y < 260:
+                    inside_approach_zone = (
+                        approach_x1 <= center_x <= approach_x2 and approach_y1 <= center_y <= approach_y2
+                    )
+                    if not inside_approach_zone:
                         continue
+
+                    # calculate the distance to the hoop
+                    # distance_to_hoop = math.hypot(
+                    #     center_x - hoop_center_x, center_y - hoop_center_y)
+
+                    # if distance_to_hoop > MAX_HOOP_DISTANCE:
+                    #     continue
 
                 if best_score is None or distance < best_score:
                     best_score = distance
@@ -282,6 +294,11 @@ def playVideoFrameFile():
             cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
 
             cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
+
+            # Draw the basket-approach zone
+            cv.rectangle(debug_frame, (approach_x1, approach_y1),
+                         (approach_x2, approach_y2), (255, 255, 0), 2)
+
             # Show aspect ratio and circularity
             label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
             cv.putText(

@@ -1064,3 +1064,23 @@ In OpenCV Python, a rectangular ROI is usually applied by slicing the image arra
 ```python
 roi = frame[y1:y2, x1:x2]
 ```
+
+# Lesson 57 — Late Flight Is Not the Same as Rim Contact
+
+A ball in late flight can still be far from the exact hoop center.
+
+Using a strict distance-to-hoop-center rule too early can reject the true ball.
+
+A better late-flight constraint is a broader basket-approach region that includes the space above and around the rim.
+
+This is more appropriate for tracking the descending arc before the ball actually reaches the hoop.
+
+# Lesson 58 — Use a Basket-Approach Zone Before Using a Tight Hoop Zone
+
+A good progression is:
+
+- broad static ROI for initialization
+- dynamic ROI around the tracked ball
+- hoop-union ROI near the basket
+- broad basket-approach zone for late-flight filtering
+- tight hoop zone later for rim interaction / make-miss logic
