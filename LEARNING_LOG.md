@@ -682,3 +682,48 @@ Formula:
 circularity = 4 * math.pi * area / (perimeter * perimeter)
 ```
 
+# Lesson 29 — A Strong Filter Cannot Fix a Weak Contour
+
+If area, aspect ratio, and circularity all fail to isolate the basketball, the issue may not be the filters themselves.
+
+The issue may be that the ball is not forming a strong contour in the mask.
+
+In that case, improving the mask is more important than adding stricter filters.
+
+A common solution is morphology, especially closing:
+
+```python
+mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+```
+
+# Lesson 30 — Better Debugging Makes Better Tuning
+
+When multiple candidate contours survive filtering, it can still be hard to understand which one is the most likely ball.
+
+A useful debugging improvement is to draw:
+
+- bounding box
+- center point
+- aspect ratio
+- circularity
+
+This makes it easier to compare candidates visually and decide which filters need tuning next.
+
+# Lesson 31 — HSV Tuning Is Often More Important Than New Filters
+
+If the detector consistently finds the wrong colored object, the issue may be the color range itself.
+
+A broad HSV range can capture nearby colors such as yellow or washed-out orange.
+
+To target a deeper basketball orange, we can:
+
+- reduce the hue range
+- increase minimum saturation
+- increase minimum value
+
+Example tuning idea:
+
+```python
+lower_orange = np.array([5, 140, 120])
+upper_orange = np.array([18, 255, 255])
+```

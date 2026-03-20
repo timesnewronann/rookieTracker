@@ -63,11 +63,11 @@ def playVideoFrameFile():
         # Crop ROI
         roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
 
-        # Define lower orange range
-        lower_orange = np.array([10, 100, 100])
+        # Updated lower orange range it was more yellow before
+        lower_orange = np.array([5, 140, 120])
 
         # Define Upper orange range
-        upper_orange = np.array([25, 255, 255])
+        upper_orange = np.array([18, 255, 255])
 
         # # convert roi to hsv, not the full frame
         # Convert from BGR to HSV
@@ -75,6 +75,11 @@ def playVideoFrameFile():
 
         # Create an orange mask from HSV image
         mask = cv.inRange(hsv, lower_orange, upper_orange)
+
+        kernel = np.ones((5, 5), np.uint8)
+
+        # use morphology close to connect broken white region and fill gaps
+        mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
 
         # Bitwise-AND mask ROI
         res = cv.bitwise_and(roi, roi, mask=mask)
@@ -99,12 +104,9 @@ def playVideoFrameFile():
 
             circularity = 4 * math.pi * area / (perimeter * perimeter)
 
-            # print circularity
-            print(f"area={area:.1f}, circularity={circularity:.2f}")
-
-            # First Test filter
-            # If it's not circular enough move on 
-            if circularity < 0.45:
+            # Second Test filter
+            # If it's not circular enough move on
+            if circularity < 0.30:
                 continue
 
             x, y, w, h = cv.boundingRect(contour)
@@ -115,14 +117,25 @@ def playVideoFrameFile():
             full_x = roi_x1 + x
             full_y = roi_y1 + y
 
-            print(f"area={area:.1f}, w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
+            # Center Point
+            center_x = full_x + w // 2
+            center_y = full_y + h // 2
+
+            cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
+
+            # print circularity
+            print(f"area={area:.1f}, circularity={circularity:.2f}",
+                  f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
 
             # update to use full frame
             # blue bounding box
-            cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 3)
+            cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
+
+            # Show aspect ratio and circularity
+            label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
             cv.putText(
                 debug_frame,
-                f"{aspect_ratio:.2f}",
+                label,
                 (full_x, max(full_y - 10, 20)),
                 cv.FONT_HERSHEY_SIMPLEX,
                 0.5,
