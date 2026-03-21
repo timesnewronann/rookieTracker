@@ -1084,3 +1084,57 @@ A good progression is:
 - hoop-union ROI near the basket
 - broad basket-approach zone for late-flight filtering
 - tight hoop zone later for rim interaction / make-miss logic
+
+# Lesson 59 — Initialization Quality Matters More Than Late-Flight Constraints
+
+If the tracker initializes on the wrong ball, then later ROI logic and hoop constraints are built on the wrong identity.
+
+A better initialization strategy is to choose the valid ball candidate closest to the player region, not just the most circular orange object.
+
+This separates:
+
+- initialization logic
+- tracking logic
+
+# Lesson 60 — Use Player Proximity to Start the Track
+
+For controlled basketball shot videos, the tracked ball should usually start near the shooter.
+
+A practical first approach is to define a manual player initialization box and choose the valid candidate closest to that region.
+
+This is a simpler alternative to pose estimation and works well for early prototypes.
+
+# Lesson 62 — Initialization Should Focus on the Ball’s Likely Starting Area
+
+The correct ball usually begins near the shooter’s upper body, not near the center of the whole player.
+
+A smaller release-zone box around the shooting pocket is more useful than a large whole-body box for initialization.
+
+# Lesson 61 — A Static Initialization Box Is Not the Same as Player Tracking
+
+A manually defined player box does not follow the player unless separate tracking logic updates it each frame.
+
+For the current project phase, a static release-zone box is often better than a full player box because the goal is to initialize the correct basketball near the shooter’s hands, not track the entire body.
+
+# Lesson 62 — Initialization Should Focus on the Ball’s Likely Starting Area
+
+The correct ball usually begins near the shooter’s upper body, not near the center of the whole player.
+
+A smaller release-zone box around the shooting pocket is more useful than a large whole-body box for initialization.
+
+# Lesson 63 — Player Tracking and Ball Initialization Are Different Problems
+
+A whole-player box is useful for tracking the shooter.
+
+A smaller release-zone box is useful for choosing the correct basketball near the hands and shooting pocket.
+
+For early shot-tracking prototypes, these should be treated as separate concepts:
+
+- player tracking answers: "where is the shooter?"
+- release-zone initialization answers: "which ball should I start tracking?"
+
+# Lesson 64 — A Larger Context Box Is Not Always Better
+
+A larger box can include more useful context, but it can also include more distracting candidates.
+
+For ball initialization, a whole-body box may overemphasize the lower body and floor area, while the desired shot ball is usually near the upper body.

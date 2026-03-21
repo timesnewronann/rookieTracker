@@ -102,6 +102,12 @@ def playVideoFrameFile():
     approach_x2 = 1240
     approach_y2 = 360
 
+    # Player init box
+    player_init_x1 = 470
+    player_init_y1 = 260
+    player_init_x2 = 660
+    player_init_y2 = 620
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -161,6 +167,10 @@ def playVideoFrameFile():
 
         # Draw the ROI rectangle on debug_frame
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
+
+        # Draw the player pose estimation
+        cv.rectangle(debug_frame, (player_init_x1, player_init_y1),
+                     (player_init_x2, player_init_y2), (255, 255, 0), 2)
 
         # Crop ROI
         roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
@@ -234,6 +244,10 @@ def playVideoFrameFile():
             hoop_center_x = (hoop_roi_x1 + hoop_roi_x2) // 2
             hoop_center_y = (hoop_roi_y1 + hoop_roi_y2) // 2
 
+            # Compute the player center once per frame
+            player_init_center_x = (player_init_x1 + player_init_x2) // 2
+            player_init_center_y = (player_init_y1 + player_init_y2) // 2
+
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
                   f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
@@ -243,11 +257,20 @@ def playVideoFrameFile():
             candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
 
             if not ball_path:
-                # pick best by circularity
-                score = circularity
-                if best_score is None or score > best_score:
-                    best_score = score
+                distance_to_player_init = math.hypot(
+                    center_x - player_init_center_x,
+                    center_y - player_init_center_y
+                )
+
+                if best_score is None or distance_to_player_init < best_score:
+                    best_score = distance_to_player_init
                     best_candidate = candidate
+
+                # # pick best by circularity
+                # score = circularity
+                # if best_score is None or score > best_score:
+                #     best_score = score
+                #     best_candidate = candidate
             else:
                 # Case 2: already tracking
                 # Track the candidate with the smallest distance to ball_path[-1]
