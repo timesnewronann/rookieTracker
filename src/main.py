@@ -103,10 +103,16 @@ def playVideoFrameFile():
     approach_y2 = 360
 
     # Player init box
-    player_init_x1 = 470
-    player_init_y1 = 260
-    player_init_x2 = 660
-    player_init_y2 = 620
+    player_box_x1 = 470
+    player_box_y1 = 260
+    player_box_x2 = 660
+    player_box_y2 = 620
+
+    # Release zone
+    release_zone_x1 = 500
+    release_zone_y1 = 260
+    release_zone_x2 = 640
+    release_zone_y2 = 430
 
     # 4. Repeatedly read the next frame
     while True:
@@ -169,8 +175,12 @@ def playVideoFrameFile():
         cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
 
         # Draw the player pose estimation
-        cv.rectangle(debug_frame, (player_init_x1, player_init_y1),
-                     (player_init_x2, player_init_y2), (255, 255, 0), 2)
+        cv.rectangle(debug_frame, (player_box_x1, player_box_y1),
+                     (player_box_x2, player_box_y2), (255, 255, 0), 2)
+
+        # Draw the release zone
+        cv.rectangle(debug_frame, (release_zone_x1, release_zone_y1),
+                     (release_zone_x2, release_zone_y2), (0, 255, 0), 2)
 
         # Crop ROI
         roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
@@ -245,8 +255,8 @@ def playVideoFrameFile():
             hoop_center_y = (hoop_roi_y1 + hoop_roi_y2) // 2
 
             # Compute the player center once per frame
-            player_init_center_x = (player_init_x1 + player_init_x2) // 2
-            player_init_center_y = (player_init_y1 + player_init_y2) // 2
+            player_init_center_x = (player_box_x1 + player_box_x2) // 2
+            player_init_center_y = (player_box_y1 + player_box_y2) // 2
 
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
@@ -257,50 +267,46 @@ def playVideoFrameFile():
             candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
 
             if not ball_path:
-                distance_to_player_init = math.hypot(
-                    center_x - player_init_center_x,
-                    center_y - player_init_center_y
+                inside_release_zone = (
+                    release_zone_x1 <= center_x <= release_zone_x2 and
+                    release_zone_y1 <= center_y <= release_zone_y2
                 )
 
-                if best_score is None or distance_to_player_init < best_score:
-                    best_score = distance_to_player_init
-                    best_candidate = candidate
+                # move on if this is not in our release
+                if not inside_release_zone:
+                    continue
 
-                # # pick best by circularity
-                # score = circularity
-                # if best_score is None or score > best_score:
-                #     best_score = score
-                #     best_candidate = candidate
+                release_zone_center_x = (release_zone_x1 + release_zone_x2) // 2
+                release_zone_center_y = (release_zone_y1 + release_zone_y2) // 2
+
+                distance_to_release_zone_center = math.hypot(
+                    center_x - release_zone_center_x,
+                    center_y - release_zone_center_y
+                )
+
+                if best_score is None or distance_to_release_zone_center < best_score:
+                    best_score = distance_to_release_zone_center
+                    best_candidate = candidate
             else:
-                # Case 2: already tracking
-                # Track the candidate with the smallest distance to ball_path[-1]
-                # use distance to last tracked point as the score
-                # For each surviving candidate compute distance to last_center
-                # Lower distance == better
                 last_x, last_y = ball_path[-1]
                 distance = math.hypot(center_x - last_x, center_y - last_y)
 
+                # move onto the next one
                 if distance > MAX_JUMP_DISTANCE:
                     continue
 
-                # reject candidates that are too far from the hoop zone, update the flight to also take vertical position
                 if last_x > 900 and last_y < 260:
                     inside_approach_zone = (
-                        approach_x1 <= center_x <= approach_x2 and approach_y1 <= center_y <= approach_y2
+                        approach_x1 <= center_x < approach_x2 and
+                        approach_y1 <= center_y < approach_y2
                     )
                     if not inside_approach_zone:
                         continue
 
-                    # calculate the distance to the hoop
-                    # distance_to_hoop = math.hypot(
-                    #     center_x - hoop_center_x, center_y - hoop_center_y)
+                    if best_score is None or distance < best_score:
+                        best_score = distance
+                        best_candidate = candidate
 
-                    # if distance_to_hoop > MAX_HOOP_DISTANCE:
-                    #     continue
-
-                if best_score is None or distance < best_score:
-                    best_score = distance
-                    best_candidate = candidate
 
         if best_candidate:
             missed_frames = 0

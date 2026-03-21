@@ -1138,3 +1138,33 @@ For early shot-tracking prototypes, these should be treated as separate concepts
 A larger box can include more useful context, but it can also include more distracting candidates.
 
 For ball initialization, a whole-body box may overemphasize the lower body and floor area, while the desired shot ball is usually near the upper body.
+
+# Lesson 65 — Use Nested Zones for Better Initialization
+
+A larger player box and a smaller release zone solve different problems.
+
+- player box = broad context around the shooter
+- release zone = likely starting area for the shot ball
+
+During initialization, candidates should be prioritized by zone membership:
+
+1. inside release zone
+2. inside player box
+3. outside both zones
+
+This is stronger than only measuring distance to a single box center.
+
+# Lesson 66 — Initialization and Tracking Need Separate Branches
+
+A tracker needs two distinct phases:
+
+1. initialization: decide which object to start tracking
+2. tracking: follow the previously selected object over time
+
+If the tracking branch is missing or commented out, the system can initialize once and then immediately lose the object.
+
+# Lesson 67 — It Is Better to Delay Initialization Than Start on the Wrong Ball
+
+If the correct shot ball is not yet in the release zone, the tracker should wait instead of initializing on a floor ball or unrelated candidate.
+
+A delayed but correct initialization is better than an immediate wrong initialization.
