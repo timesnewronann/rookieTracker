@@ -41,6 +41,19 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
+def build_search_roi():
+    pass
+
+def get_ball_candidates():
+    pass
+
+def choose_best_candidate():
+    pass
+
+def draw_debug():
+    pass
+
+
 def playVideoFrameFile():
     global clicked_frame
     # 1. set the video path
@@ -97,10 +110,10 @@ def playVideoFrameFile():
     hoop_roi_y2 = 320
 
     # Larger basket approach box -> give our track a larger valid late-flight area
-    approach_x1 = 900
-    approach_y1 = 40
-    approach_x2 = 1240
-    approach_y2 = 360
+    # approach_x1 = 900
+    # approach_y1 = 40
+    # approach_x2 = 1240
+    # approach_y2 = 360
 
     # Player init box
     player_box_x1 = 470
@@ -108,14 +121,14 @@ def playVideoFrameFile():
     player_box_x2 = 660
     player_box_y2 = 620
 
-    # Release zone
-    release_zone_x1 = 500
-    release_zone_y1 = 260
-    release_zone_x2 = 640
-    release_zone_y2 = 430
+    # # Release zone
+    # release_zone_x1 = 500
+    # release_zone_y1 = 260
+    # release_zone_x2 = 640
+    # release_zone_y2 = 430
 
-    tracking_shot = False
-    pre_release_candidate = None
+    #tracking_shot = False
+    #pre_release_candidate = None
 
     # 4. Repeatedly read the next frame
     while True:
@@ -282,7 +295,7 @@ def playVideoFrameFile():
 
             if not tracking_shot:
                 # System notices a candidate near the player
-                # Does not commit that candidate to the shot path yet 
+                # Does not commit that candidate to the shot path yet
                 # ------------------- PRE-RELEASE MODE ------------------------
                 if not inside_player_box and not inside_release_zone:
                     continue
@@ -301,7 +314,7 @@ def playVideoFrameFile():
                     zone_penality = 0
                 else:
                     zone_penality = 400
- 
+
                 # lower score is better
                 score = zone_penality + distance_to_release - (50 * circularity)
 
@@ -355,7 +368,7 @@ def playVideoFrameFile():
                     ball_path = [(center_x, center_y)]
                 else:
                     # pre-release candidate exists, wait to append to our shot path
-                    pre_release_candidate = (center_x, center_y)
+                    # pre_release_candidate = (center_x, center_y)
             else:
                 missed_frames = 0
                 ball_path.append((center_x, center_y))

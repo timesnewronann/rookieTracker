@@ -1186,3 +1186,17 @@ A cleaner approach is:
 - LATE-FLIGHT mode: nearest neighbor plus hoop approach gate
 
 Boxes do nothing by themselves. They only matter when they change candidate acceptance or scoring.
+
+# Lesson 71 - Simplify phases 
+
+This became overly complicated. 
+
+We are going to 2 phases
+
+Phase 1: Detect Candidates
+
+What orange-ish contours in this frame could be the ball?
+
+Phase 2: Choose one candidate
+- If we do not have a tracked ball yet, choose the most ball-like candidate near the shooter
+- If we do have a tracked ball, choose the candidate closes to the last point 
