@@ -206,7 +206,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
 
 
 # TODO: Update the player_box -> player_regions
-def choose_best_candidate(candidates, ball_path, player_box):
+def choose_best_candidate(candidates, ball_path, player_regions):
     """
     Choose ONE candidate from the candidates list.
 
@@ -234,6 +234,9 @@ def choose_best_candidate(candidates, ball_path, player_box):
     - still looks ball-like
     - does not jump unrealistically far
     """
+
+    # Unpack the player_region dictionary
+    player_box = player_regions["player_box"]
 
     if not candidates:
         return None
