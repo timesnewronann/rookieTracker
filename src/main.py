@@ -2,10 +2,21 @@ import math
 import cv2 as cv
 import numpy as np
 
+# Save the current frame on click
+# By clicking with mouse, we can see the pixel's color at that exact spot
 clicked_frame = None
 
 
 def on_mouse(event, x, y, flags, param):
+    """
+    Debug Assitance:
+    Let's us click on the video and inspect the pixel's BGR + HSV values.
+
+    Why this matters:
+    Ball detection depends on color thresholding in HSV space.
+    If the ball is not showing up in the mask correctly, we can use this tool to help us inspect
+    the real HSV values of the ball and tune the orange ranges
+    """
     global clicked_frame
 
     # protect agaisnt accidental clicks before a frame is assigned
@@ -14,7 +25,10 @@ def on_mouse(event, x, y, flags, param):
         return
 
     if event == cv.EVENT_LBUTTONDOWN:
+        # Get the exact pixel in BGR space
         bgr_pixel = clicked_frame[y, x]
+
+        # Convert the full frame to HSV to allow inspection of the same pixel
         hsv_frame = cv.cvtColor(clicked_frame, cv.COLOR_BGR2HSV)
         hsv_pixel = hsv_frame[y, x]
 
@@ -22,6 +36,8 @@ def on_mouse(event, x, y, flags, param):
         print(f"BGR pixel: {bgr_pixel}")
         print(f"HSV pixel: {hsv_pixel}")
 
+        # Inspect a small path around the clicked point
+        # A single pixel can be noisy so a local average can be more helpful
         patch_size = 5
         half = patch_size // 2
 
@@ -41,14 +57,45 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
-def build_search_roi():
-    pass
+# Build our
+def build_search_roi(ball_path, frame_width, frame_height, startup_roi, margin):
+    """
+    Decide WHERE we should search for the ball.
+
+    Two modes:
+    1. Startup Mode:
+        If we do not have any tracked ball points, use a fixed startup ROI.
+        Keeps our search small and avoids scanning the whole frame.
+
+    2. Tracking Mode:
+        If we already know where the ball was in the last frame,
+        search near the last known positon using a margin.
+
+    Why is this helpful:
+    - A smaller search area == less false orange object
+    - Once tracking starts, the ball should not teleport across the frame,
+      so searching near the last point is more stable.
+    """
+    if not ball_path:
+        return startup_roi
+
+    last_x, last_y = ball_path[-1]
+
+    roi_x1 = max(0, last_x - margin)
+    roi_y1 = max(0, last_y - margin)
+    roi_x2 = min(frame_width, last_x + margin)
+    roi_y2 = min(frame_height, last_y + margin)
+
+    return roi_x1, roi_y1, roi_x2, roi_y2
+
 
 def get_ball_candidates():
     pass
 
+
 def choose_best_candidate():
     pass
+
 
 def draw_debug():
     pass
@@ -127,8 +174,8 @@ def playVideoFrameFile():
     # release_zone_x2 = 640
     # release_zone_y2 = 430
 
-    #tracking_shot = False
-    #pre_release_candidate = None
+    # tracking_shot = False
+    # pre_release_candidate = None
 
     # 4. Repeatedly read the next frame
     while True:

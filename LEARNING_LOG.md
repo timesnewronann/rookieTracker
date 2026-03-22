@@ -1187,9 +1187,9 @@ A cleaner approach is:
 
 Boxes do nothing by themselves. They only matter when they change candidate acceptance or scoring.
 
-# Lesson 71 - Simplify phases 
+# Lesson 71 - Simplify phases
 
-This became overly complicated. 
+This became overly complicated.
 
 We are going to 2 phases
 
@@ -1198,5 +1198,31 @@ Phase 1: Detect Candidates
 What orange-ish contours in this frame could be the ball?
 
 Phase 2: Choose one candidate
+
 - If we do not have a tracked ball yet, choose the most ball-like candidate near the shooter
-- If we do have a tracked ball, choose the candidate closes to the last point 
+- If we do have a tracked ball, choose the candidate closes to the last point
+
+# Lesson 72 - Implement refactor
+
+playVideoFrameFile() became overly complicated
+
+The function was was doing this:
+
+- video I/O
+- ROI management
+- HSV masking
+- morphology
+- contour extraction
+- contour filtering
+- candidate scoring
+- tracking state
+- drawing
+- display / keyboard control
+
+Separating playVideoFrameFile into different functions with clear jobs
+build_search_roi(...)
+get_ball_candidates(...)
+choose_best_candidate(...)
+draw_debug(...)
+playVideoFrameFile()
+
