@@ -350,11 +350,11 @@ def draw_debug(frame, roi, player_box, hoop_box, best_candidate, ball_path):
             1
         )
 
-        # Draw the tracked path
-        for i in range(1, len(ball_path)):
-            cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255))
+    # Draw the tracked path
+    for i in range(1, len(ball_path)):
+        cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255))
 
-        return debug_frame
+    return debug_frame
 
 
 def playVideoFrameFile():
@@ -425,21 +425,6 @@ def playVideoFrameFile():
     # Cap the trail length to avoid long trail history cluttering the frame
     MAX_TRAIL_POINTS = 30
 
-    # Cap the Hoop distance
-    # MAX_HOOP_DISTANCE = 140
-
-    # hardcoded hoop region
-    # hoop_roi_x1 = 1040
-    # hoop_roi_y1 = 240
-    # hoop_roi_x2 = 1130
-    # hoop_roi_y2 = 320
-
-    # Larger basket approach box -> give our track a larger valid late-flight area
-    # approach_x1 = 900
-    # approach_y1 = 40
-    # approach_x2 = 1240
-    # approach_y2 = 360
-
     # Startup ROI
     # Fixed search area before the first ball point is found
     startup_roi = (420, 220, 760, 680)
@@ -447,12 +432,6 @@ def playVideoFrameFile():
     # Hoop box:
     # Drawn for context
     hoop_box = (1040, 240, 1130, 320)
-
-    # Player init box
-    # player_box_x1 = 470
-    # player_box_y1 = 260
-    # player_box_x2 = 660
-    # player_box_y2 = 620
 
     # Player box:
     # Used during startup mode to bias the first detection near the shooter
@@ -563,15 +542,16 @@ def playVideoFrameFile():
             cv.imwrite("debug_frame.jpg", debug_frame)
         print("Saved debug_frame.jpg")
 
-        # 8. Release the video object
-        cap.release()
+    # 8. Release the video object
+    cap.release()
 
-        # 9. Destroy the display window
-        cv.destroyAllWindows()
+    # 9. Destroy the display window
+    cv.destroyAllWindows()
 
 
 def main():
     playVideoFrameFile()
 
-    if __name__ == "__main__":
-        main()
+
+if __name__ == "__main__":
+    main()
