@@ -1168,3 +1168,21 @@ If the tracking branch is missing or commented out, the system can initialize on
 If the correct shot ball is not yet in the release zone, the tracker should wait instead of initializing on a floor ball or unrelated candidate.
 
 A delayed but correct initialization is better than an immediate wrong initialization.
+
+# Lesson 68 — Filtering and Scoring Must Be Separate
+
+A common tracking bug is accidentally placing candidate-scoring logic inside a special-case filter block.
+
+In this project, late-flight approach-zone filtering should only reject invalid candidates near the hoop. The normal nearest-neighbor scoring should still run for all tracked frames, not only late-flight frames.
+
+# Lesson 70 — Candidate Selection Needs Explicit Modes
+
+A tracker becomes confusing when initialization, active tracking, and late-flight constraints all live inside one mixed decision block.
+
+A cleaner approach is:
+
+- INIT mode: choose ball near shooter / release area
+- TRACK mode: nearest neighbor to last known ball center
+- LATE-FLIGHT mode: nearest neighbor plus hoop approach gate
+
+Boxes do nothing by themselves. They only matter when they change candidate acceptance or scoring.

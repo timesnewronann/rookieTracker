@@ -114,6 +114,9 @@ def playVideoFrameFile():
     release_zone_x2 = 640
     release_zone_y2 = 430
 
+    tracking_shot = False
+    pre_release_candidate = None
+
     # 4. Repeatedly read the next frame
     while True:
         ret, frame = cap.read()
@@ -266,58 +269,100 @@ def playVideoFrameFile():
             # Track the candidate with highest circularity
             candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
 
-            if not ball_path:
-                inside_release_zone = (
-                    release_zone_x1 <= center_x <= release_zone_x2 and
-                    release_zone_y1 <= center_y <= release_zone_y2
-                )
+            # --------------------- INIT MODE -------------------#
+            inside_release_zone = (
+                release_zone_x1 <= center_x <= release_zone_x2 and
+                release_zone_y1 <= center_y <= release_zone_y2
+            )
 
-                # move on if this is not in our release
-                if not inside_release_zone:
+            inside_player_box = (
+                player_box_x1 <= center_x <= player_box_x2 and
+                player_box_y1 <= center_y <= player_box_y2
+            )
+
+            if not tracking_shot:
+                # System notices a candidate near the player
+                # Does not commit that candidate to the shot path yet 
+                # ------------------- PRE-RELEASE MODE ------------------------
+                if not inside_player_box and not inside_release_zone:
                     continue
 
                 release_zone_center_x = (release_zone_x1 + release_zone_x2) // 2
                 release_zone_center_y = (release_zone_y1 + release_zone_y2) // 2
 
-                distance_to_release_zone_center = math.hypot(
+                distance_to_release = math.hypot(
                     center_x - release_zone_center_x,
                     center_y - release_zone_center_y
                 )
 
-                if best_score is None or distance_to_release_zone_center < best_score:
-                    best_score = distance_to_release_zone_center
+                # priority buckets
+                # release zone beats player box
+                if inside_release_zone:
+                    zone_penality = 0
+                else:
+                    zone_penality = 400
+ 
+                # lower score is better
+                score = zone_penality + distance_to_release - (50 * circularity)
+
+                if best_score is None or score < best_score:
+                    best_score = score
                     best_candidate = candidate
             else:
+                # --------------------- SHOT TRACK MODE -------------------#
                 last_x, last_y = ball_path[-1]
                 distance = math.hypot(center_x - last_x, center_y - last_y)
 
-                # move onto the next one
-                if distance > MAX_JUMP_DISTANCE:
-                    continue
+                jump_limit = MAX_JUMP_DISTANCE
 
+                # --------------------- LATE-FLIGHT GATE ------------------#
                 if last_x > 900 and last_y < 260:
+                    jump_limit = 180
+
                     inside_approach_zone = (
-                        approach_x1 <= center_x < approach_x2 and
-                        approach_y1 <= center_y < approach_y2
+                        approach_x1 <= center_x <= approach_x2 and
+                        approach_y1 <= center_y <= approach_y2
                     )
                     if not inside_approach_zone:
                         continue
 
-                    if best_score is None or distance < best_score:
-                        best_score = distance
-                        best_candidate = candidate
+                # move onto the next one
+                if distance > jump_limit:
+                    continue
 
+                score = distance - (20 * circularity)
+
+                # Nearest-neighbor scoring happens for all tracking frames
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_candidate = candidate
 
         if best_candidate:
             missed_frames = 0
             # Unpack best_candidate and use best_candidates values
             full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
 
-            ball_path.append((center_x, center_y))
+            if not tracking_shot:
+                # only START the acutal shot track once the candidate enters release zone
+                inside_release_zone = (
+                    release_zone_x1 <= center_x <= release_zone_x2 and
+                    release_zone_y1 <= center_y <= release_zone_y2
+                )
 
-            # If we exceed our trail length remove the oldest point
-            if len(ball_path) > MAX_TRAIL_POINTS:
-                ball_path.pop(0)
+                if inside_release_zone:
+                    tracking_shot = True
+                    missed_frames = 0
+                    ball_path = [(center_x, center_y)]
+                else:
+                    # pre-release candidate exists, wait to append to our shot path
+                    pre_release_candidate = (center_x, center_y)
+            else:
+                missed_frames = 0
+                ball_path.append((center_x, center_y))
+
+                # if our trail is too long removed the oldest point
+                if len(ball_path) > MAX_TRAIL_POINTS:
+                    ball_path.pop(0)
 
             # blue bounding box
             cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
@@ -325,8 +370,8 @@ def playVideoFrameFile():
             cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
 
             # Draw the basket-approach zone
-            cv.rectangle(debug_frame, (approach_x1, approach_y1),
-                         (approach_x2, approach_y2), (255, 255, 0), 2)
+            # cv.rectangle(debug_frame, (approach_x1, approach_y1),
+            #              (approach_x2, approach_y2), (255, 255, 0), 2)
 
             # Show aspect ratio and circularity
             label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
@@ -340,10 +385,14 @@ def playVideoFrameFile():
                 1
             )
         else:
-            missed_frames += 1
+            if tracking_shot:
+                missed_frames += 1
 
+        # ---------- RESET STATE ------------
         if missed_frames > MAX_MISSED_FRAMES:
             ball_path = []
+            tracking_shot = False
+            pre_release_candidate = None
 
         # Draw the trail
         for i in range(1, len(ball_path)):
