@@ -64,17 +64,27 @@ def detect_player(frame):
     Later:
     replace with YOLO person detection.
     """
-    return None
+    return (470, 260, 660, 620)
 
 
 def build_player_regions(player_box, frame_shape):
     """
     Takes a player box and returns dynamic regions derived from it.
     """
+    x1, y1, x2, y2 = player_box
+    frame_h, frame_w = frame_shape[:2]
+
+    pad_x = 40
+    pad_y = 20
+
+    search_x1 = max(0, x1 - pad_x)
+    search_y1 = max(0, y1 - pad_y)
+    search_x2 = min(frame_w, x2 + pad_x)
+    search_y2 = min(frame_h, y2 + pad_y)
 
     return {
         "player_box": player_box,
-        "ball_search_zone": (...),
+        "ball_search_zone": (search_x1, search_y1, search_x2, search_y2),
     }
 
 
@@ -566,7 +576,7 @@ def playVideoFrameFile():
             display_mode = "res"
         elif key == ord("s"):
             cv.imwrite("debug_frame.jpg", debug_frame)
-        print("Saved debug_frame.jpg")
+            print("Saved debug_frame.jpg")
 
     # 8. Release the video object
     cap.release()
