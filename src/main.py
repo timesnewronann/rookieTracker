@@ -102,7 +102,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
 
     Inputs:
     - mask: binary image where orange-ish pixels are white
-    - roi_x1, roi_y1: offesets we can convert ROI-local contour coordinates 
+    - roi_x1, roi_y1: offesets we can convert ROI-local contour coordinates
       back into full-frame coordinates
 
     Returns:
@@ -193,7 +193,7 @@ def choose_best_candidate(candidates, ball_path, player_box):
 
     Why is this separated this function from ball_candidates()?
     Because of two questions:
-    1. Which contours are plausible 
+    1. Which contours are plausible
     2. Out of these plausible contours, which one should we trust most?
 
     We use two scoring modes:
@@ -202,7 +202,7 @@ def choose_best_candidate(candidates, ball_path, player_box):
     We do not have a previous ball location yet.
     So we prefer a candidate that:
     - is inside the player box
-    - is close to the player center 
+    - is close to the player center
     - is circular
     - has an aspect ratio near 1
 
@@ -262,13 +262,119 @@ def choose_best_candidate(candidates, ball_path, player_box):
             aspect_penalty = abs(1.0 - aspect_ratio) * 100
 
             # Lower score == better
+            # Subrtract circularity because Hight circularity is good
+            # More circular candidates get rewarded with a lower scorer
+            score = distance_to_player_center + aspect_penalty - (80 * circularity)
+
+            # --------------------------
+            # TRACKING MODE
+            # --------------------------
+
+            # We have a ball point, so we prioritize tracking the ball
+        else:
+            last_x, last_y = ball_path[-1]
+            distance_to_last = math.hypot(cx - last_x, cy - last_y)
+
+            # Reject candidates that jumpt too far from the previous point.
+            # A real ball can move quickly, but not usually teleport.
+            if distance_to_last > 120:
+                continue
+
+            aspect_penalty = abs(1.0 - aspect_ratio) * 60
+
+            # During tracking, closeness to the last point is important
+            # Shape is still important, but location continuity is more important
+            score = distance_to_last + aspect_penalty - (40 * circularity)
+
+        if best_score is None or score < best_score:
+            best_score = score
+            best_candidate = candidate
+
+        return best_candidate
 
 
-def draw_debug():
-    pass
+def draw_debug(frame, roi, player_box, hoop_box, best_candidate, ball_path):
+    """
+    Draw overlays on the frame so we can visually debug the tracked points
+
+    This function does not perform detection
+    It only draws
+    """
+    roi_x1, roi_y1, roi_x2, roi_y2 = roi
+    player_box_x1, player_box_y1, player_box_x2, player_box_y2 = player_box
+    hoop_roi_x1, hoop_roi_y1, hoop_roi_x2, hoop_roi_y2 = hoop_box
+
+    debug_frame = frame.copy()
+
+    # Yellow rectange == current search ROI
+    cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
+
+    # Cyan Rectangle == startup player box
+    cv.rectangle(
+        debug_frame, (player_box_x1, player_box_y1), (player_box_x2,
+                                                      player_box_y2), (255, 255, 0), 2
+    )
+
+    # Yellow rectangle = hoop region
+    # We are not using it to track shots made/missed yet but we are keeping it for context
+    cv.rectangle(
+        debug_frame, (hoop_roi_x1, hoop_roi_y1), (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2
+    )
+
+    if best_candidate:
+        x = best_candidate["x"]
+        y = best_candidate["y"]
+        w = best_candidate["w"]
+        h = best_candidate["h"]
+        cx = best_candidate["center_x"]
+        cy = best_candidate["center_y"]
+        aspect_ratio = best_candidate["aspect_ratio"]
+        circularity = best_candidate["circularity"]
+
+        # Blue rectangle == chosen ball candidate
+        cv.rectangle(debug_frame,
+                     (x, y), (x + w, y + h), (255, 0, 0), 3)
+
+        # Red center dot == center of our chosen candidate
+        cv.circle(debug_frame, (cx, cy), 5, (0, 0, 255), -1)
+
+        # Show shape states so we understand why a contour was selected
+        label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
+        cv.putText(
+            debug_frame,
+            label,
+            (x, max(y - 10, 20)),
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 255, 255),
+            1
+        )
+
+        # Draw the tracked path
+        for i in range(1, len(ball_path)):
+            cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255))
+
+        return debug_frame
 
 
 def playVideoFrameFile():
+    """
+    Main coordinator function
+
+    "Game manager"
+    It does not contain the logic
+    It orchestrates the steps in the proper order
+
+    Frame Loop Order:
+    1. Read Frame
+    2. Choose ROI
+    3. Build Orange Mask
+    4. Extract plausible ball candidates
+    5. Choose best candidate
+    6. Update path
+    7. Draw debug overlays
+    8. Show Frame
+    """
     global clicked_frame
     # 1. set the video path
     video_path = "data/raw/trimmedJumper.mp4"
@@ -299,6 +405,11 @@ def playVideoFrameFile():
     print(f"Duration: {int(frame_count) / int(fps)}")
     # ---METADATA---
 
+    # Display mode lets us inspect different parts of the pipeline
+    # "frame" = full debug frame
+    # "mask" = binary orange mask
+    # "res" = masked color result
+
     display_mode = "frame"
 
     # Track the ball_path
@@ -315,13 +426,13 @@ def playVideoFrameFile():
     MAX_TRAIL_POINTS = 30
 
     # Cap the Hoop distance
-    MAX_HOOP_DISTANCE = 140
+    # MAX_HOOP_DISTANCE = 140
 
     # hardcoded hoop region
-    hoop_roi_x1 = 1040
-    hoop_roi_y1 = 240
-    hoop_roi_x2 = 1130
-    hoop_roi_y2 = 320
+    # hoop_roi_x1 = 1040
+    # hoop_roi_y1 = 240
+    # hoop_roi_x2 = 1130
+    # hoop_roi_y2 = 320
 
     # Larger basket approach box -> give our track a larger valid late-flight area
     # approach_x1 = 900
@@ -329,20 +440,29 @@ def playVideoFrameFile():
     # approach_x2 = 1240
     # approach_y2 = 360
 
+    # Startup ROI
+    # Fixed search area before the first ball point is found
+    startup_roi = (420, 220, 760, 680)
+
+    # Hoop box:
+    # Drawn for context
+    hoop_box = (1040, 240, 1130, 320)
+
     # Player init box
-    player_box_x1 = 470
-    player_box_y1 = 260
-    player_box_x2 = 660
-    player_box_y2 = 620
+    # player_box_x1 = 470
+    # player_box_y1 = 260
+    # player_box_x2 = 660
+    # player_box_y2 = 620
 
-    # # Release zone
-    # release_zone_x1 = 500
-    # release_zone_y1 = 260
-    # release_zone_x2 = 640
-    # release_zone_y2 = 430
+    # Player box:
+    # Used during startup mode to bias the first detection near the shooter
+    player_box = (470, 260, 660, 620)
 
-    # tracking_shot = False
-    # pre_release_candidate = None
+    # Updated lower orange range it was more yellow before
+    lower_orange = np.array([2, 100, 90])
+
+    # Define Upper orange range
+    upper_orange = np.array([12, 255, 255])
 
     # 4. Repeatedly read the next frame
     while True:
@@ -357,21 +477,51 @@ def playVideoFrameFile():
         # Resize the frame
         frame = cv.resize(frame, (1280, 720))
 
-        # copy for drawing
-        debug_frame = frame.copy()
-
         # Updating ROI for dynamic ROI
         frame_height, frame_width = frame.shape[:2]
 
-        # ---- DYNAMIC ROI LOGIC ----
-        # Start with either static or dynamic ball ROI
+        # copy for drawing
+        debug_frame = frame.copy()
+
+        # Figure out where to search on this frame
+        roi = build_search_roi(ball_path, frame_width, frame_height, startup_roi, margin=160)
+        roi_x1, roi_y1, roi_x2, roi_y2 = roi
+
+        # Crop the roi to only process relevant area
+        cropped_roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
+
+         # # convert roi to hsv, not the full frame
+        # Convert from BGR to HSV
+        hsv = cv.cvtColor(cropped_roi, cv.COLOR_BGR2HSV)
+
+          # Create an orange mask from HSV image
+        mask = cv.inRange(hsv, lower_orange, upper_orange)
+
+        kernel = np.ones((5, 5), np.uint8)
+
+        # use morphology close to connect broken white region and fill gaps
+        mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+
+        # Bitwise-AND mask ROI
+        res = cv.bitwise_and(roi, roi, mask=mask)
+
+        # Find contours from the mask
+        contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+
+        # Track the best candidates for tracking
+        best_candidate = None
+        # best_circularity = 0
+        best_score = None
+
+            # ---- DYNAMIC ROI LOGIC ----
+            # Start with either static or dynamic ball ROI
         if not ball_path:
             roi_x1 = 250
             roi_y1 = 300
             roi_x2 = 1050
             roi_y2 = 720
-        else:
-            last_x, last_y = ball_path[-1]
+            else:
+                last_x, last_y = ball_path[-1]
             margin = 160
 
             # clamp the ROI
@@ -391,218 +541,218 @@ def playVideoFrameFile():
                 roi_x2 = max(roi_x2, hoop_roi_x2)
                 roi_y2 = max(roi_y2, hoop_roi_y2)
 
-        # Final Clamp
-        roi_x1 = max(0, roi_x1)
-        roi_y1 = max(0, roi_y1)
-        roi_x2 = min(frame_width, roi_x2)
-        roi_y2 = min(frame_height, roi_y2)
+            # Final Clamp
+            roi_x1 = max(0, roi_x1)
+            roi_y1 = max(0, roi_y1)
+            roi_x2 = min(frame_width, roi_x2)
+            roi_y2 = min(frame_height, roi_y2)
 
-        # Draw the manual hoop on the debug frame
-        cv.rectangle(debug_frame, (hoop_roi_x1, hoop_roi_y1),
-                     (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2)
+            # Draw the manual hoop on the debug frame
+            cv.rectangle(debug_frame, (hoop_roi_x1, hoop_roi_y1),
+                    (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2)
 
-        # Draw the ROI rectangle on debug_frame
-        cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
+                     # Draw the ROI rectangle on debug_frame
+                     cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
 
-        # Draw the player pose estimation
-        cv.rectangle(debug_frame, (player_box_x1, player_box_y1),
+                     # Draw the player pose estimation
+                     cv.rectangle(debug_frame, (player_box_x1, player_box_y1),
                      (player_box_x2, player_box_y2), (255, 255, 0), 2)
 
-        # Draw the release zone
-        cv.rectangle(debug_frame, (release_zone_x1, release_zone_y1),
+                     # Draw the release zone
+                     cv.rectangle(debug_frame, (release_zone_x1, release_zone_y1),
                      (release_zone_x2, release_zone_y2), (0, 255, 0), 2)
 
-        # Crop ROI
-        roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
+                     # Crop ROI
+                     roi = frame[roi_y1: roi_y2, roi_x1:roi_x2]
 
-        # Updated lower orange range it was more yellow before
-        lower_orange = np.array([2, 100, 90])
+                         # Updated lower orange range it was more yellow before
+                         lower_orange = np.array([2, 100, 90])
 
-        # Define Upper orange range
-        upper_orange = np.array([12, 255, 255])
+                         # Define Upper orange range
+                         upper_orange = np.array([12, 255, 255])
 
-        # # convert roi to hsv, not the full frame
-        # Convert from BGR to HSV
-        hsv = cv.cvtColor(roi, cv.COLOR_BGR2HSV)
+                         # # convert roi to hsv, not the full frame
+                         # Convert from BGR to HSV
+                         hsv = cv.cvtColor(roi, cv.COLOR_BGR2HSV)
 
-        # Create an orange mask from HSV image
-        mask = cv.inRange(hsv, lower_orange, upper_orange)
+                         # Create an orange mask from HSV image
+                         mask = cv.inRange(hsv, lower_orange, upper_orange)
 
-        kernel = np.ones((5, 5), np.uint8)
+                         kernel = np.ones((5, 5), np.uint8)
 
-        # use morphology close to connect broken white region and fill gaps
-        mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
+                         # use morphology close to connect broken white region and fill gaps
+                         mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel)
 
-        # Bitwise-AND mask ROI
-        res = cv.bitwise_and(roi, roi, mask=mask)
+                         # Bitwise-AND mask ROI
+                         res = cv.bitwise_and(roi, roi, mask=mask)
 
-        # Find contours from the mask
-        contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+                         # Find contours from the mask
+                         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-        # Track the best candidates for tracking
-        best_candidate = None
-        # best_circularity = 0
-        best_score = None
+                         # Track the best candidates for tracking
+                         best_candidate = None
+                         # best_circularity = 0
+                         best_score = None
 
-        # loop through the contours
-        for contour in contours:
+                         # loop through the contours
+                         for contour in contours:
 
             # Filter by area
             # get the area
-            area = cv.contourArea(contour)
+            area= cv.contourArea(contour)
 
             # draw contour with a smaller test threshold
             if area < 100:
                 continue
 
             # computer permiter and circularity inside the contour loop
-            perimeter = cv.arcLength(contour, True)
+            perimeter= cv.arcLength(contour, True)
 
             if perimeter == 0:
                 continue
 
             # Filter by circularity
-            circularity = 4 * math.pi * area / (perimeter * perimeter)
+            circularity= 4 * math.pi * area / (perimeter * perimeter)
 
             # Second Test filter
             if circularity < 0.25:
                 continue
 
-            x, y, w, h = cv.boundingRect(contour)
+            x, y, w, h= cv.boundingRect(contour)
 
             # Compute the aspect ratio
-            aspect_ratio = w / h
+            aspect_ratio= w / h
 
-            full_x = roi_x1 + x
-            full_y = roi_y1 + y
+            full_x= roi_x1 + x
+            full_y= roi_y1 + y
 
             # Compute the center point
-            center_x = full_x + w // 2
-            center_y = full_y + h // 2
+            center_x= full_x + w // 2
+            center_y= full_y + h // 2
 
             # Compute the hoop center
-            hoop_center_x = (hoop_roi_x1 + hoop_roi_x2) // 2
-            hoop_center_y = (hoop_roi_y1 + hoop_roi_y2) // 2
+            hoop_center_x= (hoop_roi_x1 + hoop_roi_x2) // 2
+            hoop_center_y= (hoop_roi_y1 + hoop_roi_y2) // 2
 
             # Compute the player center once per frame
-            player_init_center_x = (player_box_x1 + player_box_x2) // 2
-            player_init_center_y = (player_box_y1 + player_box_y2) // 2
+            player_init_center_x= (player_box_x1 + player_box_x2) // 2
+            player_init_center_y= (player_box_y1 + player_box_y2) // 2
 
             # print circularity
             print(f"area={area:.1f}, circularity={circularity:.2f}",
                   f"w={w}, h={h}, aspect_ratio={aspect_ratio:.2f}")
 
-            # Case 1: first tracked point
-            # Track the candidate with highest circularity
-            candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
+                  # Case 1: first tracked point
+                  # Track the candidate with highest circularity
+                  candidate = (full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity)
 
-            # --------------------- INIT MODE -------------------#
-            inside_release_zone = (
+                  # --------------------- INIT MODE -------------------#
+                  inside_release_zone = (
                 release_zone_x1 <= center_x <= release_zone_x2 and
                 release_zone_y1 <= center_y <= release_zone_y2
             )
 
-            inside_player_box = (
-                player_box_x1 <= center_x <= player_box_x2 and
+                inside_player_box = (
+               player_box_x1 <= center_x <= player_box_x2 and
                 player_box_y1 <= center_y <= player_box_y2
             )
 
-            if not tracking_shot:
+                if not tracking_shot:
                 # System notices a candidate near the player
                 # Does not commit that candidate to the shot path yet
                 # ------------------- PRE-RELEASE MODE ------------------------
-                if not inside_player_box and not inside_release_zone:
-                    continue
+            if not inside_player_box and not inside_release_zone:
+            continue
 
-                release_zone_center_x = (release_zone_x1 + release_zone_x2) // 2
-                release_zone_center_y = (release_zone_y1 + release_zone_y2) // 2
+                release_zone_center_x= (release_zone_x1 + release_zone_x2) // 2
+                release_zone_center_y= (release_zone_y1 + release_zone_y2) // 2
 
-                distance_to_release = math.hypot(
-                    center_x - release_zone_center_x,
+                distance_to_release= math.hypot(
+                   center_x - release_zone_center_x,
                     center_y - release_zone_center_y
                 )
 
-                # priority buckets
-                # release zone beats player box
-                if inside_release_zone:
-                    zone_penality = 0
+                    # priority buckets
+                    # release zone beats player box
+                    if inside_release_zone:
+                zone_penality = 0
+                    else:
+                zone_penality = 400
+
+                    # lower score is better
+                    score = zone_penality + distance_to_release - (50 * circularity)
+
+                    if best_score is None or score < best_score:
+                best_score = score
+                    best_candidate= candidate
                 else:
-                    zone_penality = 400
-
-                # lower score is better
-                score = zone_penality + distance_to_release - (50 * circularity)
-
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best_candidate = candidate
-            else:
                 # --------------------- SHOT TRACK MODE -------------------#
-                last_x, last_y = ball_path[-1]
-                distance = math.hypot(center_x - last_x, center_y - last_y)
+                last_x, last_y= ball_path[-1]
+                distance= math.hypot(center_x - last_x, center_y - last_y)
 
-                jump_limit = MAX_JUMP_DISTANCE
+                jump_limit= MAX_JUMP_DISTANCE
 
                 # --------------------- LATE-FLIGHT GATE ------------------#
                 if last_x > 900 and last_y < 260:
-                    jump_limit = 180
+                jump_limit = 180
 
-                    inside_approach_zone = (
-                        approach_x1 <= center_x <= approach_x2 and
+                    inside_approach_zone= (
+                       approach_x1 <= center_x <= approach_x2 and
                         approach_y1 <= center_y <= approach_y2
                     )
-                    if not inside_approach_zone:
-                        continue
-
-                # move onto the next one
-                if distance > jump_limit:
+                        if not inside_approach_zone:
                     continue
 
-                score = distance - (20 * circularity)
+                    # move onto the next one
+                    if distance > jump_limit:
+                    continue
 
-                # Nearest-neighbor scoring happens for all tracking frames
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best_candidate = candidate
+                    score = distance - (20 * circularity)
 
-        if best_candidate:
-            missed_frames = 0
-            # Unpack best_candidate and use best_candidates values
-            full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
+                    # Nearest-neighbor scoring happens for all tracking frames
+                    if best_score is None or score < best_score:
+                    best_score= score
+                    best_candidate= candidate
 
-            if not tracking_shot:
-                # only START the acutal shot track once the candidate enters release zone
-                inside_release_zone = (
+                    if best_candidate:
+                    missed_frames = 0
+                    # Unpack best_candidate and use best_candidates values
+                    full_x, full_y, w, h, center_x, center_y, aspect_ratio, circularity = best_candidate
+
+                    if not tracking_shot:
+                    # only START the acutal shot track once the candidate enters release zone
+                    inside_release_zone = (
                     release_zone_x1 <= center_x <= release_zone_x2 and
                     release_zone_y1 <= center_y <= release_zone_y2
                 )
 
-                if inside_release_zone:
-                    tracking_shot = True
-                    missed_frames = 0
-                    ball_path = [(center_x, center_y)]
-                else:
+                    if inside_release_zone:
+                tracking_shot = True
+                    missed_frames= 0
+                    ball_path= [(center_x, center_y)]
+                    else:
                     # pre-release candidate exists, wait to append to our shot path
                     # pre_release_candidate = (center_x, center_y)
-            else:
-                missed_frames = 0
+                else:
+                missed_frames= 0
                 ball_path.append((center_x, center_y))
 
                 # if our trail is too long removed the oldest point
                 if len(ball_path) > MAX_TRAIL_POINTS:
-                    ball_path.pop(0)
+                ball_path.pop(0)
 
-            # blue bounding box
-            cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
+                # blue bounding box
+                cv.rectangle(debug_frame, (full_x, full_y), (full_x + w, full_y + h), (255, 0, 0), 4)
 
-            cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
+                cv.circle(debug_frame, (center_x, center_y), 6, (0, 0, 255), - 1)
 
-            # Draw the basket-approach zone
-            # cv.rectangle(debug_frame, (approach_x1, approach_y1),
-            #              (approach_x2, approach_y2), (255, 255, 0), 2)
+                # Draw the basket-approach zone
+                # cv.rectangle(debug_frame, (approach_x1, approach_y1),
+                #              (approach_x2, approach_y2), (255, 255, 0), 2)
 
-            # Show aspect ratio and circularity
-            label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
-            cv.putText(
+                # Show aspect ratio and circularity
+                label = f"a:{aspect_ratio:.2f} c:{circularity:.2f}"
+                cv.putText(
                 debug_frame,
                 label,
                 (full_x, max(full_y - 10, 20)),
@@ -611,57 +761,57 @@ def playVideoFrameFile():
                 (255, 255, 255),
                 1
             )
-        else:
+            else:
             if tracking_shot:
-                missed_frames += 1
+            missed_frames += 1
 
-        # ---------- RESET STATE ------------
-        if missed_frames > MAX_MISSED_FRAMES:
-            ball_path = []
-            tracking_shot = False
-            pre_release_candidate = None
+            # ---------- RESET STATE ------------
+            if missed_frames > MAX_MISSED_FRAMES:
+            ball_path= []
+            tracking_shot= False
+            pre_release_candidate= None
 
-        # Draw the trail
-        for i in range(1, len(ball_path)):
+            # Draw the trail
+            for i in range(1, len(ball_path)):
             cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255), 2)
 
-        cv.imwrite("debug_frame.jpg", debug_frame)
+            cv.imwrite("debug_frame.jpg", debug_frame)
 
-        if display_mode == "frame":
+            if display_mode == "frame":
             cv.imshow("ShotTracker", debug_frame)
-            clicked_frame = frame.copy()
+            clicked_frame= frame.copy()
             cv.setMouseCallback("ShotTracker", on_mouse)
 
-        elif display_mode == "mask":
+            elif display_mode == "mask":
             cv.imshow("ShotTracker", mask)
 
-        elif display_mode == "res":
+            elif display_mode == "res":
             cv.imshow("ShotTracker", res)
 
-        key = cv.waitKey(0) & 0xFF
+            key = cv.waitKey(0) & 0xFF
 
-        if key == ord("q"):
+            if key == ord("q"):
             break
-        elif key == ord("1"):
-            display_mode = "frame"
-        elif key == ord("2"):
-            display_mode = "mask"
-        elif key == ord("3"):
-            display_mode = "res"
-        elif key == ord("s"):
+            elif key == ord("1"):
+            display_mode= "frame"
+            elif key == ord("2"):
+            display_mode= "mask"
+            elif key == ord("3"):
+            display_mode= "res"
+            elif key == ord("s"):
             cv.imwrite("debug_frame.jpg", debug_frame)
             print("Saved debug_frame.jpg")
 
-    # 8. Release the video object
-    cap.release()
+            # 8. Release the video object
+            cap.release()
 
-    # 9. Destroy the display window
-    cv.destroyAllWindows()
+            # 9. Destroy the display window
+            cv.destroyAllWindows()
 
 
-def main():
+            def main():
     playVideoFrameFile()
 
 
-if __name__ == "__main__":
+                if __name__ == "__main__":
     main()
