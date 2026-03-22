@@ -57,7 +57,27 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
-# Build our
+def detect_player(frame):
+    """
+    For now:
+    return the current manual player box.
+    Later:
+    replace with YOLO person detection.
+    """
+    return None
+
+
+def build_player_regions(player_box, frame_shape):
+    """
+    Takes a player box and returns dynamic regions derived from it.
+    """
+
+    return {
+        "player_box": player_box,
+        "ball_search_zone": (...),
+    }
+
+
 def build_search_roi(ball_path, frame_width, frame_height, startup_roi, margin):
     """
     Decide WHERE we should search for the ball.
@@ -185,6 +205,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
     return candidates
 
 
+# TODO: Update the player_box -> player_regions
 def choose_best_candidate(candidates, ball_path, player_box):
     """
     Choose ONE candidate from the candidates list.
@@ -290,7 +311,7 @@ def choose_best_candidate(candidates, ball_path, player_box):
             best_score = score
             best_candidate = candidate
 
-        return best_candidate
+    return best_candidate
 
 
 def draw_debug(frame, roi, player_box, hoop_box, best_candidate, ball_path):
@@ -433,10 +454,6 @@ def playVideoFrameFile():
     # Drawn for context
     hoop_box = (1040, 240, 1130, 320)
 
-    # Player box:
-    # Used during startup mode to bias the first detection near the shooter
-    player_box = (470, 260, 660, 620)
-
     # Updated lower orange range it was more yellow before
     lower_orange = np.array([2, 100, 90])
 
@@ -458,6 +475,12 @@ def playVideoFrameFile():
 
         # Updating ROI for dynamic ROI
         frame_height, frame_width = frame.shape[:2]
+
+        # Player box:
+        # Used during startup mode to bias the first detection near the shooter
+        # player_box = (470, 260, 660, 620)
+        player_box = detect_player(frame)
+        player_regions = build_player_regions(player_box, frame.shape)
 
         # copy for drawing
         debug_frame = frame.copy()
@@ -491,7 +514,7 @@ def playVideoFrameFile():
         candidates = get_ball_candidates(mask, roi_x1, roi_y1)
 
         # Select the best candidate
-        best_candidate = choose_best_candidate(candidates, ball_path, player_box)
+        best_candidate = choose_best_candidate(candidates, ball_path, player_regions)
 
         # go through the best candidate
         if best_candidate:

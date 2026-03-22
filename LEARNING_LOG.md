@@ -1226,3 +1226,56 @@ choose_best_candidate(...)
 draw_debug(...)
 playVideoFrameFile()
 
+# Overhaul
+# Player-first detection skeleton
+Introducing functions
+- detect_player(frame)
+- build_player_regions(player_box, frame_shape)
+- get_ball_candidates(mask, roi_x1, roi_y1)
+- choose_best_candidate(candidates, ball_path, player_regions)
+
+## detect_player(frame)
+Job: find the shooter
+Return:
+player_box = (x1, y1, x2, y2)
+
+## build_player_regions(player_box, frame_shape)
+Job: Convert a detected player into useful dynamic regions
+Return:
+{
+    "player_box": ...,
+    "ball_search_zone": ...,
+    "upper_body_zone": ...,
+    "release_watch_zone": ...
+}
+## get_ball_candidates(mask, roi_x1, roi_y1)
+Job: Same as now
+
+Keep it simple
+- filter contours
+- return plausible ball-like candidates 
+
+## choose_best_candidate(candidates, ball_path, player_regions)
+Job: use player-relative context to choose one candidate
+
+Startup mode:
+- choose candidate in the player-centered search zone
+
+Tracking mode:
+- choose candidate near last tracked point 
+
+This is much cleaner than guessing from a giant ROI 
+
+## playVideoFrameFile()
+Job: orchestration only
+
+1. Read Frame
+2. Detect Player
+3. Build Player region
+4. Choose ROI
+5. Build Mask
+6. Get Ball Candidates
+7. Choose best candidate
+8. Update path
+9. Draw Debug
+
