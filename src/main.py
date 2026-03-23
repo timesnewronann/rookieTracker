@@ -71,17 +71,23 @@ def build_player_regions(player_box, frame_shape):
     """
     Takes a player box and returns dynamic regions derived from it.
     """
+
+    # unpack the box
     x1, y1, x2, y2 = player_box
+    # get the height and width of the frame
     frame_h, frame_w = frame_shape[:2]
 
-    pad_x = 40
-    pad_y = 20
+    # Refactor into player_size
+    player_width = x2 - x1
+    player_height = y2 - y1
 
-    search_x1 = max(0, x1 - pad_x)
-    search_y1 = max(0, y1 - pad_y)
-    search_x2 = min(frame_w, x2 + pad_x)
-    search_y2 = min(frame_h, y2 + pad_y)
+    # get search zone coordinates
+    search_x1 = max(0, x1 - player_width)
+    search_y1 = max(0, y1 - player_height)
+    search_x2 = min(frame_w, x2 + player_width)
+    search_y2 = min(frame_h, y2 + player_height)
 
+    # return a dictionary of the player's box and the area to search for the basketball
     return {
         "player_box": player_box,
         "ball_search_zone": (search_x1, search_y1, search_x2, search_y2),
@@ -106,11 +112,15 @@ def build_search_roi(ball_path, frame_width, frame_height, startup_roi, margin):
     - Once tracking starts, the ball should not teleport across the frame,
       so searching near the last point is more stable.
     """
+
+    # using a fixed startup_roi when ball_path is empty
     if not ball_path:
         return startup_roi
 
+    # get the last x, y coordinate on the ball path
     last_x, last_y = ball_path[-1]
 
+    # get the Region of interest coordinates
     roi_x1 = max(0, last_x - margin)
     roi_y1 = max(0, last_y - margin)
     roi_x2 = min(frame_width, last_x + margin)
@@ -215,7 +225,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
     return candidates
 
 
-# TODO: Update the player_box -> player_regions
+# TODO: Use ball_search zone during startup mode
 def choose_best_candidate(candidates, ball_path, player_regions):
     """
     Choose ONE candidate from the candidates list.
@@ -248,6 +258,10 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     # Unpack the player_region dictionary
     player_box = player_regions["player_box"]
 
+    # get the ball_search_zone from the dict
+    ball_search_zone = player_regions["ball_search_zone"]
+    search_x1, search_y1, search_x2, search_y2 = ball_search_zone
+
     if not candidates:
         return None
 
@@ -271,15 +285,18 @@ def choose_best_candidate(candidates, ball_path, player_regions):
         # --------------------------
         # We do not have a tracked ball -> get a good first guess
         if not ball_path:
-            inside_player_box = (
-                player_box_x1 <= cx <= player_box_x2 and
-                player_box_y1 <= cy <= player_box_y2
+            # replace inside_player_box with inside_ball_search zone
+            inside_ball_search_zone = (
+                # player_box_x1 <= cx <= player_box_x2 and
+                # player_box_y1 <= cy <= player_box_y2
+                search_x1 <= cx <= search_x2 and
+                search_y1 <= cy <= search_y2
             )
 
             # On startup, only consider candidates near the player
             # We avoid random orange regions on the floor/background/shorts
             # from winning the first detection.
-            if not inside_player_box:
+            if not inside_ball_search_zone:
                 continue
 
             # Distance to the player's center is used a rough location
