@@ -260,7 +260,7 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     - still looks ball-like
     - does not jump unrealistically far
     """
-
+    MAX_JUMP_DISTANCE = 120
     # Unpack the player_region dictionary
     player_box = player_regions["player_box"]
 
@@ -270,11 +270,6 @@ def choose_best_candidate(candidates, ball_path, player_regions):
 
     if not candidates:
         return None
-
-        # Player init box
-    player_box_x1, player_box_y1, player_box_x2, player_box_y2 = player_box
-    player_center_x = (player_box_x1 + player_box_x2) // 2
-    player_center_y = (player_box_y1 + player_box_y2) // 2
 
     # Computer the center of ball_search_zone
     search_center_x = (search_x1 + search_x2) // 2
@@ -297,8 +292,6 @@ def choose_best_candidate(candidates, ball_path, player_regions):
         if not ball_path:
             # replace inside_player_box with inside_ball_search zone
             inside_ball_search_zone = (
-                # player_box_x1 <= cx <= player_box_x2 and
-                # player_box_y1 <= cy <= player_box_y2
                 search_x1 <= cx <= search_x2 and
                 search_y1 <= cy <= search_y2
             )
@@ -308,13 +301,6 @@ def choose_best_candidate(candidates, ball_path, player_regions):
             # from winning the first detection.
             if not inside_ball_search_zone:
                 continue
-
-            # Distance to the player's center is used a rough location
-            # smaller distance == better
-            # distance_to_player_center = math.hypot(
-            #     cx - player_center_x,
-            #     cy - player_center_y
-            # )
 
             distance_to_search_center = math.hypot(
                 cx - search_center_x,
@@ -345,7 +331,7 @@ def choose_best_candidate(candidates, ball_path, player_regions):
 
             # Reject candidates that jumpt too far from the previous point.
             # A real ball can move quickly, but not usually teleport.
-            if distance_to_last > 120:
+            if distance_to_last > MAX_JUMP_DISTANCE:
                 continue
 
             aspect_penalty = abs(1.0 - aspect_ratio) * 60
