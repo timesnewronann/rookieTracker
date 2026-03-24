@@ -86,12 +86,12 @@ def build_player_regions(player_box, frame_shape):
 
     # This search zone is too large -> far above the player
     # Should start a little below the very top of the player box not at the very top
-    search_y1 = max(0, y1 - int(player_height * 0.15))
+    search_y1 = max(0, y1 + int(player_height * 0.15))
     search_x2 = min(frame_w, x2 + int(player_width * 0.25))
 
     # Should usually stop around the lower torso / thigh / knee area because that is a better v1 guess for where the ball is likely to be during gather and release
     # This is too generous includes too much of the floor
-    search_y2 = min(frame_h, y2 + int(player_height * 0.95))
+    search_y2 = min(frame_h, y1 + int(player_height * 0.95))
 
     # return a dictionary of the player's box and the area to search for the basketball
     return {
@@ -350,26 +350,39 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     return best_candidate
 
 
-def draw_debug(frame, roi, player_box, hoop_box, best_candidate, ball_path):
+def draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path):
     """
     Draw overlays on the frame so we can visually debug the tracked points
 
     This function does not perform detection
     It only draws
     """
-    roi_x1, roi_y1, roi_x2, roi_y2 = roi
+    # roi_x1, roi_y1, roi_x2, roi_y2 = roi
+
+    # Unpack the player_region dictionary
+    player_box = player_regions["player_box"]
+
+    # get the ball_search_zone from the dict
+    ball_search_zone = player_regions["ball_search_zone"]
+    search_x1, search_y1, search_x2, search_y2 = ball_search_zone
+
     player_box_x1, player_box_y1, player_box_x2, player_box_y2 = player_box
     hoop_roi_x1, hoop_roi_y1, hoop_roi_x2, hoop_roi_y2 = hoop_box
 
     debug_frame = frame.copy()
 
     # Yellow rectange == current search ROI
-    cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
+    # cv.rectangle(debug_frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
 
     # Cyan Rectangle == startup player box
     cv.rectangle(
         debug_frame, (player_box_x1, player_box_y1), (player_box_x2,
                                                       player_box_y2), (255, 255, 0), 2
+    )
+
+    # Draw search zone in green
+    cv.rectangle(
+        debug_frame, (search_x1, search_y1), (search_x2, search_y2), (0, 255, 0), 2
     )
 
     # Yellow rectangle = hoop region
@@ -571,7 +584,7 @@ def playVideoFrameFile():
             ball_path = []
 
         # Draw overlays for debugging
-        debug_frame = draw_debug(frame, roi, player_box, hoop_box, best_candidate, ball_path)
+        debug_frame = draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path)
 
         if display_mode == "frame":
             cv.imshow("ShotTracker", debug_frame)
