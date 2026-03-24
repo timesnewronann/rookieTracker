@@ -82,7 +82,7 @@ def build_player_regions(player_box, frame_shape):
     player_height = y2 - y1
 
     # get search zone coordinates
-    search_x1 = max(0, x1 - int(player_width * 0.05))
+    search_x1 = max(0, x1 + int(player_width * 0.05))
 
     # This search zone is too large -> far above the player
     # Should start a little below the very top of the player box not at the very top
@@ -276,6 +276,10 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     player_center_x = (player_box_x1 + player_box_x2) // 2
     player_center_y = (player_box_y1 + player_box_y2) // 2
 
+    # Computer the center of ball_search_zone
+    search_center_x = (search_x1 + search_x2) // 2
+    search_center_y = (search_y1 + search_y2) // 2
+
     best_candidate = None
     best_score = None
 
@@ -307,9 +311,15 @@ def choose_best_candidate(candidates, ball_path, player_regions):
 
             # Distance to the player's center is used a rough location
             # smaller distance == better
-            distance_to_player_center = math.hypot(
-                cx - player_center_x,
-                cy - player_center_y
+            # distance_to_player_center = math.hypot(
+            #     cx - player_center_x,
+            #     cy - player_center_y
+            # )
+
+            distance_to_search_center = math.hypot(
+                cx - search_center_x,
+                cy - search_center_y
+
             )
 
             # Penalize shapes that are less round.
@@ -321,7 +331,8 @@ def choose_best_candidate(candidates, ball_path, player_regions):
             # Lower score == better
             # Subrtract circularity because Hight circularity is good
             # More circular candidates get rewarded with a lower scorer
-            score = distance_to_player_center + aspect_penalty - (80 * circularity)
+            # score = distance_to_player_center + aspect_penalty - (80 * circularity)
+            score = distance_to_search_center + aspect_penalty - (80 * circularity)
 
             # --------------------------
             # TRACKING MODE
