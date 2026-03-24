@@ -82,16 +82,16 @@ def build_player_regions(player_box, frame_shape):
     player_height = y2 - y1
 
     # get search zone coordinates
-    search_x1 = max(0, x1 - int(player_width * 0.25))
+    search_x1 = max(0, x1 - int(player_width * 0.05))
 
     # This search zone is too large -> far above the player
     # Should start a little below the very top of the player box not at the very top
     search_y1 = max(0, y1 + int(player_height * 0.15))
-    search_x2 = min(frame_w, x2 + int(player_width * 0.25))
+    search_x2 = min(frame_w, x2 + int(player_width * 0.15))
 
     # Should usually stop around the lower torso / thigh / knee area because that is a better v1 guess for where the ball is likely to be during gather and release
     # This is too generous includes too much of the floor
-    search_y2 = min(frame_h, y1 + int(player_height * 0.95))
+    search_y2 = min(frame_h, y1 + int(player_height * 0.80))
 
     # return a dictionary of the player's box and the area to search for the basketball
     return {
@@ -357,7 +357,7 @@ def draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path):
     This function does not perform detection
     It only draws
     """
-    # roi_x1, roi_y1, roi_x2, roi_y2 = roi
+    roi_x1, roi_y1, roi_x2, roi_y2 = roi
 
     # Unpack the player_region dictionary
     player_box = player_regions["player_box"]
@@ -422,7 +422,7 @@ def draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path):
 
     # Draw the tracked path
     for i in range(1, len(ball_path)):
-        cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255))
+        cv.line(debug_frame, ball_path[i - 1], ball_path[i], (0, 255, 255), 2)
 
     return debug_frame
 
