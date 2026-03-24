@@ -57,6 +57,7 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
+#TODO: update with YOLO to detect player 
 def detect_player(frame):
     """
     For now:
