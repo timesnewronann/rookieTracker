@@ -82,10 +82,16 @@ def build_player_regions(player_box, frame_shape):
     player_height = y2 - y1
 
     # get search zone coordinates
-    search_x1 = max(0, x1 - player_width)
-    search_y1 = max(0, y1 - player_height)
-    search_x2 = min(frame_w, x2 + player_width)
-    search_y2 = min(frame_h, y2 + player_height)
+    search_x1 = max(0, x1 - int(player_width * 0.25))
+
+    # This search zone is too large -> far above the player
+    # Should start a little below the very top of the player box not at the very top
+    search_y1 = max(0, y1 - int(player_height * 0.15))
+    search_x2 = min(frame_w, x2 + int(player_width * 0.25))
+
+    # Should usually stop around the lower torso / thigh / knee area because that is a better v1 guess for where the ball is likely to be during gather and release
+    # This is too generous includes too much of the floor
+    search_y2 = min(frame_h, y2 + int(player_height * 0.95))
 
     # return a dictionary of the player's box and the area to search for the basketball
     return {
