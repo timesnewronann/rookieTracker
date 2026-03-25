@@ -1,4 +1,12 @@
+YOLOX/
 data/
 .venv/
 venv/
+models/weights/
+YOLOX_outputs/
+*.pth
+*.pt
+*.onnx
 __pycache__/
+*.pyc
+.DS_Store

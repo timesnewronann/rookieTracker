@@ -2,6 +2,7 @@ import math
 import cv2 as cv
 import numpy as np
 
+
 # Save the current frame on click
 # By clicking with mouse, we can see the pixel's color at that exact spot
 clicked_frame = None
@@ -57,7 +58,7 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
-#TODO: update with YOLO to detect player 
+# TODO: update with YOLO to detect player
 def detect_player(frame):
     """
     For now:
