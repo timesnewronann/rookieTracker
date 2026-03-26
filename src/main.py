@@ -2,6 +2,8 @@ import math
 import cv2 as cv
 import numpy as np
 
+# import player_detection function
+from player_detection import detect_player
 
 # Save the current frame on click
 # By clicking with mouse, we can see the pixel's color at that exact spot
@@ -58,15 +60,15 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
-# TODO: update with YOLO to detect player
-def detect_player(frame):
-    """
-    For now:
-    return the current manual player box.
-    Later:
-    replace with YOLO person detection.
-    """
-    return (470, 260, 660, 620)
+# # TODO: update with YOLO to detect player
+# def detect_player(frame):
+#     """
+#     run YOLOX
+#     get all person boxes
+#     select the real on-court player
+#     return one box
+#     """
+#     return (470, 260, 660, 620)
 
 
 def build_player_regions(player_box, frame_shape):
