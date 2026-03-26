@@ -212,4 +212,10 @@ def detect_player(frame):
     person_boxes = get_person_detections(frame, predictor)
 
     print(f"person_boxes: {person_boxes}")
-    return (470, 260, 660, 620)
+
+    player_box = choose_main_player(person_boxes, frame.shape)
+
+    if player_box is None:
+        return (470, 260, 660, 620)
+
+    return player_box
