@@ -62,20 +62,19 @@ def on_mouse(event, x, y, flags, param):
         print("-" * 50)
 
 
-# # TODO: update with YOLO to detect player
-# def detect_player(frame):
-#     """
-#     run YOLOX
-#     get all person boxes
-#     select the real on-court player
-#     return one box
-#     """
-#     return (470, 260, 660, 620)
-
-
 def build_player_regions(player_box, frame_shape):
     """
-    Takes a player box and returns dynamic regions derived from it.
+    Build dynamic player-relative regions.
+
+    player_box:
+        Detected player rectangle from YOLOX.
+
+    ball_search_zone:
+        Broad area whwere the ball is allowed to be.
+
+    ball_preference_zone:
+        Tighter centered possesion zone used to prefer likely
+        player-owned ball candidates during startup.
     """
 
     # unpack the box
@@ -98,6 +97,8 @@ def build_player_regions(player_box, frame_shape):
     # Should usually stop around the lower torso / thigh / knee area because that is a better v1 guess for where the ball is likely to be during gather and release
     # This is too generous includes too much of the floor
     search_y2 = min(frame_h, y1 + int(player_height * 0.80))
+
+    # Tighten up the preference zone
 
     # return a dictionary of the player's box and the area to search for the basketball
     return {
