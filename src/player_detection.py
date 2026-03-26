@@ -79,8 +79,50 @@ def get_person_detections(frame, predictor):
     exp = predictor["exp"]
     preprocess = predictor["preprocess"]
 
-    # Preprocess the frame into the format YOLOX expects
-    
+    # Resizes the frame into YOLOX's expected input format
+    img, _ = preprocess(frame, None, exp.test_size)
+
+    # Convert the processed image into a PyTorch tensor
+    # unsqueeze(0) == adds the batch dimension
+    # ex: (channels, heights, width) -> (1, channels, height, width)
+    img = torch.from_numpy(img).unsqueeze(0).float()
+
+    # Run inference with gradients disabled.
+    # Tells PyTorch
+    # - do inferences only
+    # - do not track gradients
+    # - use less memory
+    with torch.no_grad():
+        outputs = model(img)
+        outputs = postprocess(
+            outputs,
+            num_classes=len(COCO_CLASSES),
+            conf_thre=exp.test_conf,
+            nms_thre=exp.nmsthre,
+            class_agnostic=True,
+        )
+
+    detections = []
+    output = outputs[0]
+
+    # If no detections in the frame
+    if output is None:
+        return detections
+
+    output = output.cpu().numpy()
+
+    for row in output:
+        x1, y1, x2, y2, obj_conf, cls_conf, cls_id = row[:7]
+
+        # keep only person detections
+        if COCO_CLASSES[cls_id] != "person":
+            continue
+
+        conf = float(obj_conf * cls_conf)
+
+        detections.append((int(x1), int(y1), int(x2), int(y2), conf))
+
+    return detections
 
 
 def choose_main_player():
