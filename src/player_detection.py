@@ -136,9 +136,65 @@ def get_person_detections(frame, predictor):
 
     return detections
 
+    """
+    1. Take all person detections
+    2. Filter out obvious mural/background people
+    3. Return the best on-court player box
+    """
 
-def choose_main_player():
-    pass
+
+def choose_main_player(person_boxes, frame_shape):
+    """
+    Pick the most likely on-court player from YOLOX person detections.
+
+    Heuristics for this fixed-camera clip:
+    - confidence threshold
+    - minimum area
+    - lower in the frame
+    - choose the largest remaining box
+    """
+    if not person_boxes:
+        return None
+
+    frame_h, frame_w = frame_shape[:2]
+    filtered_boxes = []
+
+    for x1, y1, x2, y2, conf in person_boxes:
+        width = x2 - x1
+        height = y2 - y1
+        area = width * height
+        center_y = (y1 + y2) / 2
+        bottom_y = y2
+
+        # Reject weak detections
+        if conf < 0.30:
+            continue
+
+        # Reject very small mural boxes
+        if area < 15000:
+            continue
+
+        # Removes people too high in the frame
+        if center_y < frame_h * 0.45:
+            continue
+
+        # add the filtered person boxes to our list
+        filtered_boxes.append((x1, y1, x2, y2, conf, area, bottom_y))
+
+    if not filtered_boxes:
+        return None
+
+    # Select the box with the largest area
+    # If the areas are close, select the one lower in the frame
+    # Among the remaining cnadidates:
+    # - select the bigger boxes
+    # - if they're similar select the lower box
+    best_box = max(filtered_boxes, key=lambda box: (box[5], box[6]))
+
+    x1, y1, x2, y2 = best_box[:4]
+
+    return (x1, y1, x2, y2)
+
 
 # TODO: update with YOLO to detect player
 # Temporarily updating to test the two functions
