@@ -136,12 +136,6 @@ def get_person_detections(frame, predictor):
 
     return detections
 
-    """
-    1. Take all person detections
-    2. Filter out obvious mural/background people
-    3. Return the best on-court player box
-    """
-
 
 def choose_main_player(person_boxes, frame_shape):
     """
@@ -196,10 +190,7 @@ def choose_main_player(person_boxes, frame_shape):
     return (x1, y1, x2, y2)
 
 
-# TODO: update with YOLO to detect player
-# Temporarily updating to test the two functions
-
-
+# TODO update hardcoded fallback -> last known player box instead of fixed manual box
 def detect_player(frame):
     """
     run YOLOX
@@ -210,8 +201,6 @@ def detect_player(frame):
     predictor = load_player_detector()
 
     person_boxes = get_person_detections(frame, predictor)
-
-    print(f"person_boxes: {person_boxes}")
 
     player_box = choose_main_player(person_boxes, frame.shape)
 
