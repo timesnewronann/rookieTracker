@@ -1,16 +1,16 @@
 import torch  # loads the checkpoint and runs the model
 
 # ValTransform preprocesses the image the way YOLOX expects
-from YOLOX.yolox.data.data_augment import ValTransform
+from yolox.data.data_augment import ValTransform
 
 # COCO_CLASSES lets us check whether a detection is "person"
-from YOLOX.yolox.data.datasets import COCO_CLASSES
+from yolox.data.datasets import COCO_CLASSES
 
 # get_exp loads the YOLOX config
-from YOLOX.yolox.exp import get_exp
+from yolox.exp import get_exp
 
 # postprocess turns raw model output into usable detection boxes
-from YOLOX.yolox.utils import postprocess
+from yolox.utils import postprocess
 
 # Load the model once, if we reload YOLOX every frame this app will be super slow
 PLAYER_PREDICTOR = None
@@ -73,11 +73,13 @@ def get_person_detections(frame, predictor):
     Returns:
         list of tuples: (x1, y1, x2, y2, conf)
     """
-
     # unpack the predictor dictionary
     model = predictor["model"]
     exp = predictor["exp"]
     preprocess = predictor["preprocess"]
+
+    # Resize the frames to the original sizing instead of the extremely small scale
+    frame_h, frame_w = frame.shape[:2]
 
     # Resizes the frame into YOLOX's expected input format
     img, _ = preprocess(frame, None, exp.test_size)
@@ -111,8 +113,18 @@ def get_person_detections(frame, predictor):
 
     output = output.cpu().numpy()
 
+    # Scale detections from YOLO test_size to original frame size
+    ratio = min(exp.test_size[0] / frame.shape[0], exp.test_size[1] / frame.shape[1])
+
     for row in output:
         x1, y1, x2, y2, obj_conf, cls_conf, cls_id = row[:7]
+        cls_id = int(cls_id)
+
+        # divide the coordinates by the ratio
+        x1 /= ratio
+        y1 /= ratio
+        x2 /= ratio
+        y2 /= ratio
 
         # keep only person detections
         if COCO_CLASSES[cls_id] != "person":
