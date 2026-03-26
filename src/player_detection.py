@@ -129,6 +129,7 @@ def choose_main_player():
     pass
 
 # TODO: update with YOLO to detect player
+# Temporarily updating to test the two functions
 
 
 def detect_player(frame):
@@ -138,4 +139,9 @@ def detect_player(frame):
     select the real on-court player
     return one box
     """
+    predictor = load_player_detector()
+
+    person_boxes = get_person_detections(frame, predictor)
+
+    print(f"person_boxes: {person_boxes}")
     return (470, 260, 660, 620)
