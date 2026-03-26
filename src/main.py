@@ -124,6 +124,11 @@ def draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path):
     player_box_x1, player_box_y1, player_box_x2, player_box_y2 = player_box
     hoop_roi_x1, hoop_roi_y1, hoop_roi_x2, hoop_roi_y2 = hoop_box
 
+    # ball_preference_zone unpack
+    ball_preference_zone = player_regions["ball_preference_zone"]
+
+    pref_x1, pref_y1, pref_x2, pref_y2 = ball_preference_zone
+
     debug_frame = frame.copy()
 
     # Yellow rectange == current search ROI
@@ -144,6 +149,11 @@ def draw_debug(frame, roi, player_regions, hoop_box, best_candidate, ball_path):
     # We are not using it to track shots made/missed yet but we are keeping it for context
     cv.rectangle(
         debug_frame, (hoop_roi_x1, hoop_roi_y1), (hoop_roi_x2, hoop_roi_y2), (0, 255, 255), 2
+    )
+
+    # Magenta = centered prefence zone
+    cv.rectangle(
+        debug_frame, (pref_x1, pref_y1), (pref_x2, pref_y2), (255, 0, 255), 2
     )
 
     if best_candidate:
