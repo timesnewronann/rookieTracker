@@ -1313,3 +1313,7 @@ Now the concept is mostly right enough for V1
 Bottleneck:
 
 - static player localization
+
+# Lesson 74: Player-First detection milestone with YOLOX
+
+### What I accomplished
