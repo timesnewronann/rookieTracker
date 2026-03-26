@@ -30,6 +30,7 @@ def load_player_detector():
         return PLAYER_PREDICTOR
 
     # Load the YOLOX experiment/config file
+    # .py = architecture / config
     exp = get_exp("YOLOX/exps/default/yolox_tiny.py", None)
 
     # Set inference-related values
@@ -37,15 +38,18 @@ def load_player_detector():
     exp.nmsthre = 0.45
     exp.test_size = (416, 416)
 
-    # Build the model from the experiement
+    # Build the neural networkf structure
     model = exp.get_model()
     model.eval()
 
-    # Load the pretrained checkpoint
+    # Load the pretrained checkpoint weights
+    # .pth = learned weights
     checkpoint = torch.load("models/weights/yolox_tiny.pth", map_location="cpu")
+
+    # Fills the network with the trained parameters
     model.load_state_dict(checkpoint["model"])
 
-    # YOLOX preproccesing helper
+    # YOLOX preproccesing helper -> handles image preprocessing before inference
     preprocess = ValTransform(legacy=False)
 
     # Player predictor dict
@@ -58,13 +62,25 @@ def load_player_detector():
     return PLAYER_PREDICTOR
 
 
-def get_person_detections():
+def get_person_detections(frame, predictor):
     """
     run inference on one frame
     return all detected person boxes
     does not decide who is the shooter
+
+    Run YOLOX on one frame and return only person detections
+
+    Returns:
+        list of tuples: (x1, y1, x2, y2, conf)
     """
-    pass
+
+    # unpack the predictor dictionary
+    model = predictor["model"]
+    exp = predictor["exp"]
+    preprocess = predictor["preprocess"]
+
+    # Preprocess the frame into the format YOLOX expects
+    
 
 
 def choose_main_player():
