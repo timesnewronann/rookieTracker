@@ -91,7 +91,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
         circularity = 4 * math.pi * area / (perimeter * perimeter)
 
         # Second Test filter
-        if circularity < 0.25:
+        if (0.15 <= circularity <= 0.25):
             continue
 
         # Bounding box gives us the width and height
@@ -105,7 +105,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
         # Aspect ratio near 1 means width and height are similar
         aspect_ratio = w / h
 
-        if not (0.7 <= aspect_ratio <= 1.3):
+        if not (0.5 <= aspect_ratio <= 1.8):
             continue
 
         # The contour was found inside the cropped ROI,
