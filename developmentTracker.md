@@ -1,4 +1,4 @@
-# 3/26/2026
+# 3/25/2026
 
 ## Player-First detection milestone with YOLOX
 
@@ -18,3 +18,11 @@
   - select the main on-court player using simple heuristics
 - Fixed a bug where YOLOX detection were using resized model-input coordinates instead of the original frame
 - Successfully got a moving player box in the basketball tracker that follows the real shooter instead of the mural/background people
+
+# To Do:
+
+- Improve ball association by introducing a tighter preference region inside the broader ball search zone.
+
+- Keep the broad zone for eligibility.
+
+- Use the tighter zone for startup scoring so the tracker prefers the most likely player-owned ball

@@ -1,5 +1,12 @@
 # rookieTracker
 
+# Current State of the Tracker:
+
+- The cyan player box now follows the real player.
+- The green zone is still only a player-derived possesion/search zone.
+- The green zone does not understand release, shot pocket, or hands.
+- The blue ball box can still pick the wrong orange object because the system still does not strongly model "this is the player's ball."
+
 # How to Run this Project
 
 cd shottracker

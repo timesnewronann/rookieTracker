@@ -1316,4 +1316,20 @@ Bottleneck:
 
 # Lesson 74: Player-First detection milestone with YOLOX
 
-### What I accomplished
+## 3/25/26
+
+## Key Lessons:
+
+- A third-party repo folder name is not the same as the Python import package name
+  - Repo Folder: `YOLOX`
+  - Python package: `yolox`
+- Model Config files and model weights are different things and both are needed.
+- When integrating ML code, it is better to:
+  1. Prove the model works on one image
+  2. Extract detections in isolation
+  3. Integrate into the app later
+- The right architecture pattern keeps repeating:
+  - gather candidates
+  - choose the best candidate
+- Player detection is now good enough for v1.
+- The next bottleneck is ball association.
