@@ -171,12 +171,20 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     ball_search_zone = player_regions["ball_search_zone"]
     search_x1, search_y1, search_x2, search_y2 = ball_search_zone
 
+    # Unpack ball_preference_zone
+    ball_preference_zone = player_regions["ball_preference_zone"]
+    pref_x1, pref_y1, pref_x2, pref_y2 = ball_preference_zone
+
     if not candidates:
         return None
 
     # Computer the center of ball_search_zone
     search_center_x = (search_x1 + search_x2) // 2
     search_center_y = (search_y1 + search_y2) // 2
+
+    # Compute the center of the ball_preference_zone
+    pref_center_x = (pref_x1 + pref_x2) // 2
+    pref_center_y = (pref_y1 + pref_y2) // 2
 
     best_candidate = None
     best_score = None
@@ -193,10 +201,15 @@ def choose_best_candidate(candidates, ball_path, player_regions):
         # --------------------------
         # We do not have a tracked ball -> get a good first guess
         if not ball_path:
-            # replace inside_player_box with inside_ball_search zone
             inside_ball_search_zone = (
                 search_x1 <= cx <= search_x2 and
                 search_y1 <= cy <= search_y2
+            )
+
+            # Calculate the inside ball_pref_zone
+            inside_ball_preference_zone = (
+                pref_x1 <= cx <= pref_x2 and
+                pref_y1 <= cy <= pref_y1
             )
 
             # On startup, only consider candidates near the player
