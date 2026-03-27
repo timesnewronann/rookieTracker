@@ -75,7 +75,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
         # get the area
         area = cv.contourArea(contour)
 
-        if area < 100:
+        if area < 150:
             continue
 
         # compute permiter and circularity inside the contour loop
@@ -91,7 +91,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
         circularity = 4 * math.pi * area / (perimeter * perimeter)
 
         # Second Test filter
-        if (0.15 <= circularity <= 0.25):
+        if circularity < 0.15:
             continue
 
         # Bounding box gives us the width and height
@@ -105,7 +105,7 @@ def get_ball_candidates(mask, roi_x1, roi_y1):
         # Aspect ratio near 1 means width and height are similar
         aspect_ratio = w / h
 
-        if not (0.5 <= aspect_ratio <= 1.8):
+        if not (0.55 <= aspect_ratio <= 1.6):
             continue
 
         # The contour was found inside the cropped ROI,
@@ -267,19 +267,36 @@ def choose_best_candidate(candidates, ball_path, player_regions):
 
             # We have a ball point, so we prioritize tracking the ball
         else:
-            last_x, last_y = ball_path[-1]
-            distance_to_last = math.hypot(cx - last_x, cy - last_y)
+            # last_x, last_y = ball_path[-1]
+            # distance_to_last = math.hypot(cx - last_x, cy - last_y)
 
-            # Reject candidates that jumpt too far from the previous point.
-            # A real ball can move quickly, but not usually teleport.
-            if distance_to_last > MAX_JUMP_DISTANCE:
+            # # Reject candidates that jumpt too far from the previous point.
+            # # A real ball can move quickly, but not usually teleport.
+            # if distance_to_last > MAX_JUMP_DISTANCE:
+            #     continue
+
+            # aspect_penalty = abs(1.0 - aspect_ratio) * 60
+
+            # # During tracking, closeness to the last point is important
+            # # Shape is still important, but location continuity is more important
+            # score = distance_to_last + aspect_penalty - (40 * circularity)
+            if len(ball_path) >= 2:
+                prev_x, prev_y = ball_path[-2]
+                last_x, last_y = ball_path[-1]
+
+                pred_x = last_x + (last_x - prev_x)
+                pred_y = last_y + (last_y - prev_y)
+                distance_to_motion_target = math.hypot(cx - pred_x, cy - pred_y)
+            else:
+                last_x, last_y = ball_path[-1]
+                distance_to_motion_target = math.hypot(cx - last_x, cy - last_y)
+
+            if distance_to_motion_target > 160:
                 continue
 
-            aspect_penalty = abs(1.0 - aspect_ratio) * 60
+            aspect_penalty = abs(1.0 - aspect_ratio) * 50
 
-            # During tracking, closeness to the last point is important
-            # Shape is still important, but location continuity is more important
-            score = distance_to_last + aspect_penalty - (40 * circularity)
+            score = distance_to_motion_target + aspect_penalty - (20 * circularity)
 
         if best_score is None or score < best_score:
             best_score = score
