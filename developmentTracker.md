@@ -19,6 +19,16 @@
 - Fixed a bug where YOLOX detection were using resized model-input coordinates instead of the original frame
 - Successfully got a moving player box in the basketball tracker that follows the real shooter instead of the mural/background people
 
+# Update 3/26/26:
+
+The ball detection was breaking on dribbles. Going to add YOLOX as the main ball detection
+
+## 3 phases:
+
+1. Try pretrained YOLOX ball detection first
+2. Use zones for association
+3. Only train custom ball weights if the pretrained weights miss too often
+
 # To Do:
 
 - Improve ball association by introducing a tighter preference region inside the broader ball search zone.

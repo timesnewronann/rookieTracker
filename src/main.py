@@ -92,10 +92,10 @@ def build_player_regions(player_box, frame_shape):
     search_y2 = min(frame_h, y1 + int(player_height * 0.80))
 
     # Tighten up the preference zone
-    pref_x1 = max(0, x1 + int(player_width * 0.18))
-    pref_x2 = min(frame_w, x1 + int(player_width * 0.82))
-    pref_y1 = max(0, y1 + int(player_height * 0.28))
-    pref_y2 = min(frame_h, y1 + int(player_height * 0.72))
+    pref_x1 = max(0, x1 + int(player_width * 0.24))
+    pref_x2 = min(frame_w, x1 + int(player_width * 0.85))
+    pref_y1 = max(0, y1 + int(player_height * 0.32))
+    pref_y2 = min(frame_h, y1 + int(player_height * 0.84))
 
     # return a dictionary of the player's box and the area to search for the basketball
     return {
