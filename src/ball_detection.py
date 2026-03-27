@@ -164,8 +164,6 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     - does not jump unrealistically far
     """
     MAX_JUMP_DISTANCE = 120
-    # Unpack the player_region dictionary
-    player_box = player_regions["player_box"]
 
     # get the ball_search_zone from the dict
     ball_search_zone = player_regions["ball_search_zone"]
