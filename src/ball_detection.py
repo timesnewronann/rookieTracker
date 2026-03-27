@@ -224,6 +224,15 @@ def choose_best_candidate(candidates, ball_path, player_regions):
 
             )
 
+            distance_to_pref_center = math.hypot(
+                cx - pref_center_x,
+                cy - pref_center_y
+            )
+
+            preference_bonus = 0
+            if inside_ball_preference_zone:
+                preference_bonus = 35
+
             # Penalize shapes that are less round.
             # Example:
             # aspect_ratio = 1.0 -> no penalty
@@ -234,7 +243,13 @@ def choose_best_candidate(candidates, ball_path, player_regions):
             # Subrtract circularity because Hight circularity is good
             # More circular candidates get rewarded with a lower scorer
             # score = distance_to_player_center + aspect_penalty - (80 * circularity)
-            score = distance_to_search_center + aspect_penalty - (80 * circularity)
+            score = (
+                distance_to_search_center
+                + (0.5 * distance_to_pref_center)
+                + aspect_penalty
+                - (80 * circularity)
+                - preference_bonus
+            )
 
             # --------------------------
             # TRACKING MODE
