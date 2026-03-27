@@ -210,17 +210,8 @@ def choose_best_candidate(candidates, ball_path, player_regions):
             # Calculate the inside ball_pref_zone
             inside_ball_preference_zone = (
                 pref_x1 <= cx <= pref_x2 and
-                pref_y1 <= cy <= pref_y1
+                pref_y1 <= cy <= pref_y2
             )
-
-            if inside_ball_preference_zone:
-                if best_preferred_score is None or score < best_preferred_score:
-                    best_preferred_score = score
-                    best_preferred_candidate = candidate
-            else:
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best_candidate = candidate
 
             # On startup, only consider candidates near the player
             # We avoid random orange regions on the floor/background/shorts
@@ -260,6 +251,15 @@ def choose_best_candidate(candidates, ball_path, player_regions):
                 - (80 * circularity)
                 - preference_bonus
             )
+
+            if inside_ball_preference_zone:
+                if best_preferred_score is None or score < best_preferred_score:
+                    best_preferred_score = score
+                    best_preferred_candidate = candidate
+            else:
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_candidate = candidate
 
             # --------------------------
             # TRACKING MODE
