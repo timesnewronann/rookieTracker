@@ -187,6 +187,9 @@ def choose_best_candidate(candidates, ball_path, player_regions):
     best_candidate = None
     best_score = None
 
+    best_preferred_candidate = None
+    best_preferred_score = None
+
     # go through our candidates
     for candidate in candidates:
         cx = candidate["center_x"]
@@ -209,6 +212,15 @@ def choose_best_candidate(candidates, ball_path, player_regions):
                 pref_x1 <= cx <= pref_x2 and
                 pref_y1 <= cy <= pref_y1
             )
+
+            if inside_ball_preference_zone:
+                if best_preferred_score is None or score < best_preferred_score:
+                    best_preferred_score = score
+                    best_preferred_candidate = candidate
+            else:
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_candidate = candidate
 
             # On startup, only consider candidates near the player
             # We avoid random orange regions on the floor/background/shorts
@@ -273,4 +285,7 @@ def choose_best_candidate(candidates, ball_path, player_regions):
             best_score = score
             best_candidate = candidate
 
-    return best_candidate
+    if not ball_path:
+        if best_preferred_candidate is not None:
+            return best_preferred_candidate
+        return best_candidate
