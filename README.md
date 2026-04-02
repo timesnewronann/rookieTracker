@@ -2,6 +2,13 @@
 
 # Current State of the Tracker:
 
+- Implemented YOLOX to track the player
+- Tried to train YOLOX to track the basketball
+- Need CUDA to train the model
+- Transitioning this project to Collab to access a GPU
+
+## Old state
+
 - The cyan player box now follows the real player.
 - The green zone is still only a player-derived possesion/search zone.
 - The green zone does not understand release, shot pocket, or hands.

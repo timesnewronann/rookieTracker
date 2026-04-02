@@ -11,7 +11,6 @@ YOLOX/YOLOX_outputs/
 __pycache__/
 *.pyc
 .DS_Store
-
 datasets/basketball/all_images/
 datasets/basketball/train2017/
 datasets/basketball/val2017/

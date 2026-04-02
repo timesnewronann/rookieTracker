@@ -1,5 +1,7 @@
 from yolox.exp import Exp as MyExp
 
+# Custom Training setup
+
 
 class Exp(MyExp):
     def __init__(self):
@@ -33,6 +35,7 @@ class Exp(MyExp):
         self.data_dir = "../datasets/basketball"
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
+        self.test_ann = "instances_val2017.json"
 
         self.train_name = "train2017"
         self.val_name = "val2017"
