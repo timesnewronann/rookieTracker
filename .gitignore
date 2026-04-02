@@ -4,9 +4,14 @@ data/
 venv/
 models/weights/
 YOLOX_outputs/
+YOLOX/YOLOX_outputs/
 *.pth
 *.pt
 *.onnx
 __pycache__/
 *.pyc
 .DS_Store
+
+datasets/basketball/all_images/
+datasets/basketball/train2017/
+datasets/basketball/val2017/
